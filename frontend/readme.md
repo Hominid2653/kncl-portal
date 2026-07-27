@@ -2,9 +2,11 @@
 
 ## Overview
 
-The frontend is built using **React** and provides the user interface for the Kenyan National Chess League Registration & Transfer Management System.
+Authentication is handled by Supabase Auth.
 
-It communicates with the FastAPI backend through REST APIs.
+The frontend communicates with the FastAPI backend through secured JWT requests.
+
+Users never interact directly with the database.
 
 ---
 

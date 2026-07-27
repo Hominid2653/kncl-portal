@@ -1,13 +1,11 @@
-# Entity Relationship Diagram (ERD)
+# Entity Relationship Diagram
 
 ```mermaid
 erDiagram
 
-ROLES ||--o{ USERS : has
+USER_PROFILES ||--|| PLAYERS : owns
 
-USERS ||--|| PLAYERS : owns
-
-USERS ||--o| CLUBS : manages
+USER_PROFILES ||--o| CLUBS : manages
 
 PLAYERS ||--o{ REGISTRATIONS : registers
 
@@ -15,27 +13,30 @@ CLUBS ||--o{ REGISTRATIONS : receives
 
 SEASONS ||--o{ REGISTRATIONS : contains
 
-PLAYERS ||--o{ TRANSFERS : submits
-
-CLUBS ||--o{ TRANSFERS : source
-
-CLUBS ||--o{ TRANSFERS : destination
-
-SEASONS ||--o{ TRANSFERS : belongs_to
-
-TRANSFERS ||--o{ DOCUMENTS : contains
+REGISTRATIONS ||--o{ TRANSFERS : creates
 
 TRANSFERS ||--o{ TRANSFER_APPROVALS : requires
 
-USERS ||--o{ NOTIFICATIONS : receives
+TRANSFERS ||--o{ DOCUMENTS : contains
 
-USERS ||--o{ AUDIT_LOGS : performs
+USER_PROFILES ||--o{ NOTIFICATIONS : receives
+
+USER_PROFILES ||--o{ AUDIT_LOGS : performs
 ```
 
-## Notes
+## External Authentication
 
-- UUIDs are used as primary keys.
-- PostgreSQL is hosted on Supabase.
-- SQLAlchemy manages relationships.
-- Documents are stored in Supabase Storage.
-- Authentication is handled by Supabase Auth.
+```
+Supabase Auth
+
+auth.users
+
+        │
+        ▼
+
+user_profiles
+```
+
+Authentication is managed entirely by Supabase Auth.
+
+Application data is stored inside PostgreSQL and accessed using SQLAlchemy.

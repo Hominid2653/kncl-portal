@@ -1,5 +1,7 @@
 # Database Design
 
+
+
 ## Overview
 
 The KNCL Transfer Portal uses a relational PostgreSQL database hosted on Supabase. SQLAlchemy serves as the Object Relational Mapper (ORM), allowing the FastAPI backend to interact with the database through Python models.
@@ -8,32 +10,38 @@ The database is designed to support player registration, club management, transf
 
 ---
 
-# Entity Overview
+# Database Entities
 
 | Entity | Purpose |
 |---------|----------|
-| Roles | Defines user permissions |
-| Users | Stores authenticated users |
-| Players | Stores player-specific information |
-| Clubs | Registered chess clubs |
-| Seasons | League seasons |
-| Registrations | Club registrations per season |
-| Transfers | Player transfer requests |
-| Transfer Approvals | Multi-stage approvals |
-| Documents | Uploaded documents |
-| Notifications | User notifications |
-| Audit Logs | Tracks system activity |
+| user_profiles | Stores application user information |
+| players | Chess player profiles |
+| clubs | Registered clubs |
+| seasons | League seasons |
+| registrations | Seasonal player registrations |
+| transfers | Transfer requests |
+| transfer_approvals | Approval workflow |
+| documents | Uploaded documents |
+| notifications | User notifications |
+| audit_logs | Activity tracking |
+
+Authentication users are stored by Supabase in the `auth.users` schema.
 
 ---
 
 # Roles
 
-Represents the available system roles.
+# User Roles
 
-| Field | Type | Constraints |
-|--------|------|------------|
-| id | Integer | Primary Key |
-| name | String | Unique |
+Roles are stored as a PostgreSQL ENUM.
+
+Available values
+
+- PLAYER
+- CLUB_ADMIN
+- LEAGUE_COORDINATOR
+- FEDERATION_ADMIN
+
 
 Default Roles
 
@@ -249,6 +257,23 @@ Tracks important actions.
 | created_at | Timestamp |
 
 ---
+
+Supabase Auth
+(auth.users)
+        │
+        │ 1 : 1
+        ▼
+USER_PROFILES
+        │
+        ├────────── CLUBS
+        │
+        ├────────── PLAYER_REGISTRATIONS
+        │
+        ├────────── TRANSFERS
+        │
+        ├────────── NOTIFICATIONS
+        │
+        └────────── AUDIT_LOGS
 
 # Future Tables
 

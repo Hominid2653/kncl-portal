@@ -100,20 +100,59 @@ Dashboard
 ---
 
 ## Database
+## Database
+
+The backend uses SQLAlchemy to communicate with a PostgreSQL database hosted on Supabase.
+
+Authentication is managed by Supabase Auth.
+
+### Authentication Flow
+
+```
+React
+     │
+     ▼
+Supabase Auth
+     │
+JWT
+     │
+     ▼
+FastAPI
+     │
+SQLAlchemy
+     │
+     ▼
+Supabase PostgreSQL
+```
+
+The backend never stores passwords.
+
+Supabase manages:
+
+- Login
+- Password hashing
+- Password reset
+- Email verification
+- JWT generation
+
+The application stores only user profile information inside the database.
+
 
 Supabase PostgreSQL
 
-Main Tables
+## Main Tables
 
-- Users
-- Roles
-- Players
-- Clubs
-- Club Memberships
-- Transfers
-- Documents
-- Notifications
-- Audit Logs
+- user_profiles
+- players
+- clubs
+- seasons
+- registrations
+- transfers
+- transfer_approvals
+- documents
+- notifications
+- audit_logs
+
 
 ---
 
