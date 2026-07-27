@@ -1,29 +1,17 @@
-from fastapi import FastAPI
-from app.api.router import api_router
-from app.core.config import settings
+from fastapi import APIRouter
 from sqlalchemy import text
 
-app = FastAPI(
-    title=settings.app_name,
-    version="1.0.0",
-)
+from app.database.database import engine
 
-app.include_router(api_router)
+router = APIRouter(tags=["Health"])
 
 
-@app.get("/")
-def root():
-    return {
-        "message": "KNCL Transfer Portal API",
-        "status": "running",
-    }
-
-@app.get("/health")
+@router.get("/health")
 def health():
     return {"status": "healthy"}
 
 
-@app.get("/health/db")
+@router.get("/health/db")
 def database_health():
     try:
         with engine.connect() as connection:
