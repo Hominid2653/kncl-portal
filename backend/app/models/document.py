@@ -12,13 +12,13 @@ class Document(BaseModel):
 
     transfer_id: Mapped[PG_UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("transfers.id"),
+        ForeignKey("transfers.id", ondelete="CASCADE"),
         nullable=False,
     )
 
     uploaded_by: Mapped[PG_UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("user_profiles.id"),
+        ForeignKey("user_profiles.id", ondelete="CASCADE"),
         nullable=False,
     )
 

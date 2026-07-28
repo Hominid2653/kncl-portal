@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, ForeignKey, String, Text
+from sqlalchemy import Boolean, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -10,7 +10,7 @@ class Notification(BaseModel):
 
     user_profile_id: Mapped[PG_UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("user_profiles.id"),
+        ForeignKey("user_profiles.id", ondelete="CASCADE"),
         nullable=False,
     )
 
@@ -28,3 +28,7 @@ class Notification(BaseModel):
         "UserProfile",
         back_populates="notifications",
     )
+    
+__table_args__ = (
+    Index("ix_notification_user", "user_profile_id"),
+)

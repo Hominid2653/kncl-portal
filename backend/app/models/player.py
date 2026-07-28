@@ -1,19 +1,27 @@
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Integer, String, Date
+from sqlalchemy import ForeignKey, Index, Integer, String, Date
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from sqlalchemy import UniqueConstraint
 from app.models.base import BaseModel
 
+federation_id = mapped_column(
+        String(50),
+        unique=True,
+    )
 
+fide_id = mapped_column(
+        String(50),
+        unique=True,
+    )
 class Player(BaseModel):
     __tablename__ = "players"
 
     user_profile_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("user_profiles.id"),
+        ForeignKey("user_profiles.id", ondelete="CASCADE"),
         unique=True,
     )
 
@@ -32,4 +40,15 @@ class Player(BaseModel):
 
     user_profile = relationship("UserProfile", back_populates="player")
 
-    registrations = relationship("Registration", back_populates="player")
+    registrations = relationship(
+    "Registration",
+    back_populates="player",
+    cascade="all, delete-orphan",
+    )
+
+
+__table_args__ = (
+    Index("ix_player_fide", "fide_id"),
+    Index("ix_player_chesscom", "chesscom_username"),
+    Index("ix_player_lichess", "lichess_username"),
+)

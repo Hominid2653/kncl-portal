@@ -7,23 +7,24 @@ from app.models.base import BaseModel
 class League(BaseModel):
     __tablename__ = "leagues"
 
-    name: Mapped[str] = mapped_column(
-        String(150),
-        nullable=False,
-        unique=True,
-    )
-
+    name = mapped_column(
+    String(150),
+    unique=True,
+    nullable=False,
+)
     description: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
 
     clubs = relationship(
-        "Club",
-        back_populates="league",
+    "Club",
+    back_populates="league",
+    cascade="all, delete-orphan",
     )
 
     seasons = relationship(
         "Season",
         back_populates="league",
+        cascade="all, delete-orphan",
     )
