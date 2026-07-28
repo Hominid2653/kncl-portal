@@ -22,12 +22,13 @@ class ChessComClient:
             raise ValidationError("Chess.com username is required.")
         if not CHESSCOM_USERNAME_PATTERN.match(normalized):
             raise ValidationError("Chess.com username format is invalid.")
-        return normalized
+        # Chess.com usernames are case-insensitive; the API redirects mixed case with 301.
+        return normalized.lower()
 
     async def _get_json(self, path: str) -> dict:
         url = f"{self.base_url}{path}"
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
                 response = await client.get(url, headers={"Accept": "application/json"})
         except httpx.RequestError as exc:
             raise ExternalServiceError("Unable to reach Chess.com API.") from exc

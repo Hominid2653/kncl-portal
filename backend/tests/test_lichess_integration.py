@@ -96,6 +96,11 @@ def test_lichess_client_rejects_invalid_username() -> None:
         client.normalize_username("bad username!")
 
 
+def test_chesscom_client_normalizes_username_to_lowercase() -> None:
+    client = ChessComClient()
+    assert client.normalize_username("ElChapoCheru") == "elchapocheru"
+
+
 def test_lookup_user_maps_enriched_profile(mock_lichess_client: None) -> None:
     service = LichessService()
     profile = asyncio.run(service.lookup_user("elias_mwangi"))
