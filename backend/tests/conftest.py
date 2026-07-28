@@ -14,7 +14,10 @@ from app.seed.data import (
     CLUB_NAIROBI_ID,
     LEAGUE_ID,
     PLAYER_1_ID,
+    USER_CLUB_ADMIN_NAIROBI_ID,
     USER_FED_ADMIN_ID,
+    USER_LEAGUE_COORD_ID,
+    USER_PLAYER_1_ID,
 )
 
 
@@ -36,8 +39,26 @@ def admin_headers() -> dict[str, str]:
 def player_headers() -> dict[str, str]:
     return {
         "X-Mock-Role": "PLAYER",
-        "X-Mock-User-ID": str(PLAYER_1_ID),
+        "X-Mock-User-ID": str(USER_PLAYER_1_ID),
         "X-Mock-Email": "elias.mwangi@kncl.local",
+    }
+
+
+@pytest.fixture
+def league_coord_headers() -> dict[str, str]:
+    return {
+        "X-Mock-Role": "LEAGUE_COORDINATOR",
+        "X-Mock-User-ID": str(USER_LEAGUE_COORD_ID),
+        "X-Mock-Email": "peter.otieno@kncl.local",
+    }
+
+
+@pytest.fixture
+def club_admin_headers() -> dict[str, str]:
+    return {
+        "X-Mock-Role": "CLUB_ADMIN",
+        "X-Mock-User-ID": str(USER_CLUB_ADMIN_NAIROBI_ID),
+        "X-Mock-Email": "james.kamau@kncl.local",
     }
 
 
@@ -82,6 +103,8 @@ SEEDED_IDS = {
     "league": LEAGUE_ID,
     "club": CLUB_NAIROBI_ID,
     "player": PLAYER_1_ID,
+    "user_player": USER_PLAYER_1_ID,
+    "user_fed_admin": USER_FED_ADMIN_ID,
     "auth_fed_admin": AUTH_FED_ADMIN_ID,
     "auth_player": AUTH_PLAYER_1_ID,
 }
