@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from app.core.config import settings
+from app.core.config import normalize_sync_database_url, settings
 from app.models import Base
 
 # this is the Alembic Config object, which provides
@@ -20,7 +20,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 # Keep the connection string in .env rather than committing it to alembic.ini.
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option("sqlalchemy.url", normalize_sync_database_url(settings.database_url))
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

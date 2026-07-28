@@ -33,7 +33,16 @@ docs/erd.md
 REST API documentation.
 
 ```
+docs/endpoints.md
 docs/api.md
+```
+
+### Frontend handoff
+
+Backend integration guide for the React team (auth, seed users, workflows, conventions).
+
+```
+docs/handoff/
 ```
 
 ### User Stories
