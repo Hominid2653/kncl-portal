@@ -7,7 +7,9 @@ from app.dependencies.auth import (
     CurrentUser,
     get_current_user,
     require_club_admin,
+    require_club_leadership,
     require_federation_admin,
+    require_league_leadership,
 )
 from app.models.enums import UserRole
 
@@ -40,6 +42,23 @@ def test_role_guard_rejects_an_unauthorized_user() -> None:
 
     with pytest.raises(Forbidden):
         asyncio.run(require_club_admin(user))
+
+
+def test_leadership_tiers_include_the_appropriate_higher_roles() -> None:
+    coordinator = CurrentUser(
+        id="00000000-0000-0000-0000-000000000002",
+        email="coordinator@kncl.local",
+        role=UserRole.LEAGUE_COORDINATOR,
+    )
+    club_admin = CurrentUser(
+        id="00000000-0000-0000-0000-000000000003",
+        email="club-admin@kncl.local",
+        role=UserRole.CLUB_ADMIN,
+    )
+
+    assert asyncio.run(require_league_leadership(coordinator)) == coordinator
+    assert asyncio.run(require_club_leadership(coordinator)) == coordinator
+    assert asyncio.run(require_club_leadership(club_admin)) == club_admin
 
 
 def test_mock_role_must_be_valid() -> None:

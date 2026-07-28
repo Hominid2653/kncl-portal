@@ -69,3 +69,15 @@ def require_role(*roles: UserRole) -> Callable:
 require_club_admin = require_role(UserRole.CLUB_ADMIN)
 require_league_coordinator = require_role(UserRole.LEAGUE_COORDINATOR)
 require_federation_admin = require_role(UserRole.FEDERATION_ADMIN)
+
+# Leadership tiers.  Use these for routes whose actions can be performed by a
+# higher level of the organisation as well as the directly responsible role.
+require_league_leadership = require_role(
+    UserRole.FEDERATION_ADMIN,
+    UserRole.LEAGUE_COORDINATOR,
+)
+require_club_leadership = require_role(
+    UserRole.FEDERATION_ADMIN,
+    UserRole.LEAGUE_COORDINATOR,
+    UserRole.CLUB_ADMIN,
+)
