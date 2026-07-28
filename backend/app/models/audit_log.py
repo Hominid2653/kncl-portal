@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -8,7 +10,7 @@ from app.models.base import BaseModel
 class AuditLog(BaseModel):
     __tablename__ = "audit_logs"
 
-    user_profile_id: Mapped[PG_UUID] = mapped_column(
+    user_profile_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("user_profiles.id"),
         nullable=False,
@@ -24,7 +26,7 @@ class AuditLog(BaseModel):
         nullable=False,
     )
 
-    entity_id: Mapped[PG_UUID | None] = mapped_column(
+    entity_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
     )
 

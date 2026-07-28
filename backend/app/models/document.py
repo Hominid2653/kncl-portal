@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -10,13 +11,13 @@ from app.models.base import BaseModel
 class Document(BaseModel):
     __tablename__ = "documents"
 
-    transfer_id: Mapped[PG_UUID] = mapped_column(
+    transfer_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("transfers.id", ondelete="CASCADE"),
         nullable=False,
     )
 
-    uploaded_by: Mapped[PG_UUID] = mapped_column(
+    uploaded_by: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("user_profiles.id", ondelete="CASCADE"),
         nullable=False,

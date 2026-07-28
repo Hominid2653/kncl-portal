@@ -1,23 +1,24 @@
 from datetime import date
+from uuid import UUID
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Date, UniqueConstraint
+from sqlalchemy import Boolean, Date, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
 
-__table_args__ = (
-    UniqueConstraint(
-        "league_id",
-        "year",
-        name="uq_league_year",
-    ),
-)
-
 class Season(BaseModel):
     __tablename__ = "seasons"
 
-    league_id: Mapped[PG_UUID] = mapped_column(
+    __table_args__ = (
+        UniqueConstraint(
+            "league_id",
+            "year",
+            name="uq_league_year",
+        ),
+    )
+
+    league_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("leagues.id", ondelete="CASCADE"),
         nullable=False,

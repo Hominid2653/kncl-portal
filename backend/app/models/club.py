@@ -6,21 +6,23 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
 
-__table_args__ = (
-    UniqueConstraint(
-        "league_id",
-        "name",
-        name="uq_league_club_name",
-    ),
-)
-
 class Club(BaseModel):
     __tablename__ = "clubs"
 
+    __table_args__ = (
+        UniqueConstraint(
+            "league_id",
+            "name",
+            name="uq_league_club_name",
+        ),
+        Index("ix_club_name", "name"),
+    )
+
     league_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("leagues.id",ondelete="CASCADE"),
-)
+        ForeignKey("leagues.id", ondelete="CASCADE"),
+        nullable=False,
+    )
 
     name: Mapped[str] = mapped_column(String(150))
     county: Mapped[str | None] = mapped_column(String(100))
@@ -53,12 +55,3 @@ class Club(BaseModel):
         foreign_keys="Transfer.to_club_id",
         back_populates="to_club",
     )
-
-__table_args__ = (
-    UniqueConstraint(
-        "league_id",
-        "name",
-        name="uq_league_club_name",
-    ),
-    Index("ix_club_name", "name"),
-)

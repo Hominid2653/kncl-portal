@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Index, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -12,21 +13,25 @@ from app.models.enums import TransferStatus
 class Transfer(BaseModel):
     __tablename__ = "transfers"
 
-    registration_id: Mapped[PG_UUID] = mapped_column(
+    __table_args__ = (
+        Index("ix_transfer_status", "status"),
+    )
+
+    registration_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("registrations.id", ondelete="CASCADE"),
         nullable=False,
     )
 
-    from_club_id: Mapped[PG_UUID] = mapped_column(
+    from_club_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("clubs.id",ondelete="CASCADE"),
+        ForeignKey("clubs.id", ondelete="CASCADE"),
         nullable=False,
     )
 
-    to_club_id: Mapped[PG_UUID] = mapped_column(
+    to_club_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("clubs.id",ondelete="CASCADE"),
+        ForeignKey("clubs.id", ondelete="CASCADE"),
         nullable=False,
     )
 
@@ -74,7 +79,3 @@ class Transfer(BaseModel):
         back_populates="transfer",
         cascade="all, delete-orphan",
     )
-    
-__table_args__ = (
-    Index("ix_transfer_status", "status"),
-)
