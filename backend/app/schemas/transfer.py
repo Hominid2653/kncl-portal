@@ -1,4 +1,6 @@
 from datetime import datetime
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from app.models.enums import TransferStatus
@@ -6,9 +8,9 @@ from app.schemas.common import ListResponse, TimestampSchema
 
 
 class TransferCreate(BaseModel):
-    registration_id: str
-    from_club_id: str
-    to_club_id: str
+    registration_id: UUID
+    from_club_id: UUID
+    to_club_id: UUID
     reason: str | None = None
     status: TransferStatus
     submitted_at: datetime
@@ -22,9 +24,9 @@ class TransferUpdate(BaseModel):
 
 
 class TransferResponse(TimestampSchema):
-    registration_id: str
-    from_club_id: str
-    to_club_id: str
+    registration_id: UUID
+    from_club_id: UUID
+    to_club_id: UUID
     reason: str | None = None
     status: TransferStatus
     submitted_at: datetime

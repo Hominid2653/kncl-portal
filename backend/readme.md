@@ -200,6 +200,24 @@ http://localhost:8000/redoc
 
 ---
 
+## Database Seeding
+
+Populate the database with KNCL reference data (league, clubs, players, registrations, transfers, etc.).
+
+From the `backend/` directory:
+
+```bash
+# Seed only if empty
+python -m app.seed.run
+
+# Clear seed tables and reseed
+python -m app.seed.run --reset
+```
+
+Seed data uses fixed UUIDs so IDs stay consistent across environments. See `app/seed/data.py` for reference IDs.
+
+---
+
 ## Coding Standards
 
 - Use Pydantic schemas
