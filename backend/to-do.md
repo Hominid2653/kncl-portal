@@ -20,11 +20,12 @@ Last updated: 2026-07-28
 - [x] Supabase JWT authentication (Bearer token + dev mock headers)
 - [x] Role-based authorization on all endpoints
 - [x] List scoping and per-resource access checks (`AuthorizationService`)
-- [x] Integration and authorization test suite (82+ tests passing)
+- [x] Integration and authorization test suite (87+ tests passing)
 - [x] API documentation (`docs/endpoints.md`)
 - [x] Auth smoke test (`python -m app.auth.check`)
 - [x] Transfer workflow (submit, approve, reject, cancel, notifications, audit logs)
 - [x] Registration workflow (submit, approve, reject, notifications, audit logs)
+- [x] File uploads via Supabase Storage (`POST /documents/upload`, signed download URLs)
 
 ---
 
@@ -44,15 +45,9 @@ Moved to Completed. See `TransferService` and `tests/test_transfer_workflow.py`.
 
 Moved to Completed. See `RegistrationService` and `tests/test_registration_workflow.py`.
 
-### 3. File uploads (Supabase Storage)
+### 3. File uploads — done
 
-`documents` currently store URLs only.
-
-- [ ] Upload flow (signed URL or direct upload to Supabase Storage)
-- [ ] Link files to transfers / registrations
-- [ ] File type and size validation
-- [ ] Access scoped through existing document authorization
-- [ ] Tests for upload and access control
+Moved to Completed. See `StorageService`, `DocumentService`, and `tests/test_document_upload.py`.
 
 ### 4. Real Supabase JWT verification (if needed)
 

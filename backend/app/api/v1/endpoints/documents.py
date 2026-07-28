@@ -1,20 +1,21 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.common import parse_filters
 from app.dependencies.auth import (
     CurrentUser,
     require_authenticated,
-    require_club_leadership
+    require_club_leadership,
 )
 from app.dependencies.dependencies import get_db
 from app.schemas.document import (
     DocumentCreate,
+    DocumentDownloadResponse,
     DocumentListResponse,
     DocumentResponse,
-    DocumentUpdate
+    DocumentUpdate,
 )
 from app.services.authorization_service import AuthorizationService
 from app.services.document_service import DocumentService
@@ -37,7 +38,7 @@ async def list_document(
 ):
     filters = parse_filters(filter)
     filters = await authz.scope_document_filters(db, current_user, filters)
-    return await service.list(
+    result = await service.list(
         db,
         filters=filters,
         search=search,
@@ -47,6 +48,78 @@ async def list_document(
         page=page,
         page_size=page_size,
     )
+    items = [await service.to_response(item) for item in result["items"]]
+    return {"items": items, "total": result["total"]}
+
+
+@router.post(
+    '/upload',
+    response_model=DocumentResponse,
+    summary='Upload Document',
+    status_code=201,
+)
+async def upload_document(
+    transfer_id: UUID = Form(...),
+    document_type: str | None = Form(default=None),
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_club_leadership),
+):
+    from app.repositories.transfer_repository import TransferRepository
+
+    transfer = await TransferRepository().get_by_id(db, transfer_id)
+    if not transfer:
+        from app.core.exceptions import ResourceNotFound
+
+        raise ResourceNotFound("Transfer not found.")
+    await authz.ensure_can_read_transfer(db, current_user, transfer)
+
+    content = await file.read()
+    document = await service.upload(
+        db,
+        transfer_id=transfer_id,
+        filename=file.filename or "upload.bin",
+        content_type=file.content_type,
+        content=content,
+        document_type=document_type,
+        actor=current_user,
+    )
+    return await service.to_response(document)
+
+
+@router.post('/', response_model=DocumentResponse, summary='Register Document metadata', status_code=201)
+async def create_document(
+    payload: DocumentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_club_leadership),
+):
+    from app.repositories.transfer_repository import TransferRepository
+
+    transfer = await TransferRepository().get_by_id(db, payload.transfer_id)
+    if not transfer:
+        from app.core.exceptions import ResourceNotFound
+
+        raise ResourceNotFound("Transfer not found.")
+    await authz.ensure_can_read_transfer(db, current_user, transfer)
+    document = await service.register_metadata(db, payload, current_user)
+    return await service.to_response(document)
+
+
+@router.get(
+    '/{item_id}/download-url',
+    response_model=DocumentDownloadResponse,
+    summary='Get signed download URL',
+)
+async def get_document_download_url(
+    item_id: UUID,
+    expires_in: int = Query(3600, ge=60, le=86400),
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    item = await service.get(db, item_id)
+    await authz.ensure_can_read_document(db, current_user, item)
+    download_url = await service.get_download_url(item, expires_in=expires_in)
+    return DocumentDownloadResponse(download_url=download_url, expires_in=expires_in)
 
 
 @router.get('/{item_id}', response_model=DocumentResponse, summary='Get Document by id')
@@ -57,19 +130,10 @@ async def get_document(
 ):
     item = await service.get(db, item_id)
     await authz.ensure_can_read_document(db, current_user, item)
-    return item
+    return await service.to_response(item)
 
 
-@router.post('/', response_model=DocumentResponse, summary='Create Document', status_code=201)
-async def create_document(
-    payload: DocumentCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_club_leadership),
-):
-    return await service.create(db, payload)
-
-
-@router.patch('/{item_id}', response_model=DocumentResponse, summary='Update Document')
+@router.patch('/{item_id}', response_model=DocumentResponse, summary='Update Document metadata')
 async def update_document(
     item_id: UUID,
     payload: DocumentUpdate,
@@ -79,7 +143,8 @@ async def update_document(
     payload_data = payload.model_dump(exclude_unset=True)
     item = await service.get(db, item_id)
     await authz.ensure_can_read_document(db, current_user, item)
-    return await service.update(db, item_id, payload_data)
+    updated = await service.update(db, item_id, payload_data)
+    return await service.to_response(updated)
 
 
 @router.delete('/{item_id}', status_code=204, summary='Delete Document')
@@ -90,5 +155,5 @@ async def delete_document(
 ):
     item = await service.get(db, item_id)
     await authz.ensure_can_read_document(db, current_user, item)
-    await service.delete(db, item_id)
+    await service.delete_with_storage(db, item_id)
     return Response(status_code=204)
