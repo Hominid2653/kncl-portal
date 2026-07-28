@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.common import parse_filters
@@ -8,15 +8,15 @@ from app.dependencies.auth import (
     CurrentUser,
     require_authenticated,
     require_club_leadership,
-    require_federation_admin,
-    require_league_leadership
+    require_league_leadership,
 )
 from app.dependencies.dependencies import get_db
 from app.schemas.transfer import (
+    TransferAction,
     TransferCreate,
     TransferListResponse,
     TransferResponse,
-    TransferUpdate
+    TransferUpdate,
 )
 from app.services.authorization_service import AuthorizationService
 from app.services.transfer_service import TransferService
@@ -51,6 +51,64 @@ async def list_transfer(
     )
 
 
+@router.post('/', response_model=TransferResponse, summary='Submit Transfer', status_code=201)
+async def create_transfer(
+    payload: TransferCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_club_leadership),
+):
+    await authz.ensure_can_manage_club_by_id(db, current_user, payload.from_club_id)
+    return await service.submit(db, payload, current_user)
+
+
+@router.post(
+    '/{item_id}/approve',
+    response_model=TransferResponse,
+    summary='Approve Transfer',
+)
+async def approve_transfer(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_league_leadership),
+    payload: TransferAction = Body(default_factory=TransferAction),
+):
+    transfer = await service.get(db, item_id)
+    await authz.ensure_can_read_transfer(db, current_user, transfer)
+    return await service.approve(db, item_id, current_user, payload)
+
+
+@router.post(
+    '/{item_id}/reject',
+    response_model=TransferResponse,
+    summary='Reject Transfer',
+)
+async def reject_transfer(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_league_leadership),
+    payload: TransferAction = Body(default_factory=TransferAction),
+):
+    transfer = await service.get(db, item_id)
+    await authz.ensure_can_read_transfer(db, current_user, transfer)
+    return await service.reject(db, item_id, current_user, payload)
+
+
+@router.post(
+    '/{item_id}/cancel',
+    response_model=TransferResponse,
+    summary='Cancel Transfer',
+)
+async def cancel_transfer(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_club_leadership),
+    payload: TransferAction = Body(default_factory=TransferAction),
+):
+    transfer = await service.get(db, item_id)
+    await authz.ensure_can_manage_club_by_id(db, current_user, transfer.from_club_id)
+    return await service.cancel(db, item_id, current_user, payload)
+
+
 @router.get('/{item_id}', response_model=TransferResponse, summary='Get Transfer by id')
 async def get_transfer(
     item_id: UUID,
@@ -62,22 +120,13 @@ async def get_transfer(
     return item
 
 
-@router.post('/', response_model=TransferResponse, summary='Create Transfer', status_code=201)
-async def create_transfer(
-    payload: TransferCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_club_leadership),
-):
-    await authz.ensure_can_manage_club_by_id(db, current_user, payload.from_club_id)
-    return await service.create(db, payload)
-
-
-@router.patch('/{item_id}', response_model=TransferResponse, summary='Update Transfer')
+@router.patch('/{item_id}', response_model=TransferResponse, summary='Update Transfer reason')
 async def update_transfer(
     item_id: UUID,
     payload: TransferUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_league_leadership),
+    current_user: CurrentUser = Depends(require_club_leadership),
 ):
-    payload_data = payload.model_dump(exclude_unset=True)
-    return await service.update(db, item_id, payload_data)
+    transfer = await service.get(db, item_id)
+    await authz.ensure_can_manage_club_by_id(db, current_user, transfer.from_club_id)
+    return await service.update_pending_reason(db, item_id, payload)

@@ -11,9 +11,14 @@ from app.main import app
 from app.seed.data import (
     AUTH_FED_ADMIN_ID,
     AUTH_PLAYER_1_ID,
+    CLUB_MOMBASA_ID,
     CLUB_NAIROBI_ID,
     LEAGUE_ID,
     PLAYER_1_ID,
+    REGISTRATION_1_ID,
+    REGISTRATION_3_ID,
+    TRANSFER_PENDING_ID,
+    USER_CLUB_ADMIN_MOMBASA_ID,
     USER_CLUB_ADMIN_NAIROBI_ID,
     USER_FED_ADMIN_ID,
     USER_LEAGUE_COORD_ID,
@@ -63,6 +68,15 @@ def club_admin_headers() -> dict[str, str]:
 
 
 @pytest.fixture
+def club_admin_mombasa_headers() -> dict[str, str]:
+    return {
+        "X-Mock-Role": "CLUB_ADMIN",
+        "X-Mock-User-ID": str(USER_CLUB_ADMIN_MOMBASA_ID),
+        "X-Mock-Email": "amina.hassan@kncl.local",
+    }
+
+
+@pytest.fixture
 def jwt_secret(monkeypatch: pytest.MonkeyPatch) -> str:
     secret = "test-supabase-jwt-secret"
     monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
@@ -102,7 +116,11 @@ def unknown_user_bearer_headers(jwt_secret: str) -> dict[str, str]:
 SEEDED_IDS = {
     "league": LEAGUE_ID,
     "club": CLUB_NAIROBI_ID,
+    "club_mombasa": CLUB_MOMBASA_ID,
     "player": PLAYER_1_ID,
+    "registration_1": REGISTRATION_1_ID,
+    "registration_3": REGISTRATION_3_ID,
+    "transfer_pending": TRANSFER_PENDING_ID,
     "user_player": USER_PLAYER_1_ID,
     "user_fed_admin": USER_FED_ADMIN_ID,
     "auth_fed_admin": AUTH_FED_ADMIN_ID,
