@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-ModelType = TypeVar("ModelType")
+ModelType = TypeVar('ModelType')
 
 
 class BaseRepository(Generic[ModelType]):
@@ -16,9 +16,7 @@ class BaseRepository(Generic[ModelType]):
         db: AsyncSession,
         obj_id: UUID,
     ):
-        result = await db.execute(
-            select(self.model).where(self.model.id == obj_id)
-        )
+        result = await db.execute(select(self.model).where(self.model.id == obj_id))
         return result.scalar_one_or_none()
 
     async def get_all(self, db: AsyncSession):
@@ -26,6 +24,14 @@ class BaseRepository(Generic[ModelType]):
         return result.scalars().all()
 
     async def create(self, db: AsyncSession, obj):
+        db.add(obj)
+        await db.commit()
+        await db.refresh(obj)
+        return obj
+
+    async def update(self, db: AsyncSession, obj, obj_in: dict):
+        for field, value in obj_in.items():
+            setattr(obj, field, value)
         db.add(obj)
         await db.commit()
         await db.refresh(obj)
