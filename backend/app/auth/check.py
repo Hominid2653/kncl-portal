@@ -61,21 +61,26 @@ def run_auth_checks(
     api = base_url.rstrip("/")
     results: list[CheckResult] = []
 
-    if not settings.supabase_jwt_secret:
+    jwt_configured = bool(settings.supabase_jwt_secret or settings.supabase_url)
+    if not jwt_configured:
         results.append(
             CheckResult(
-                "jwt_secret_configured",
+                "jwt_verification_configured",
                 False,
-                "SUPABASE_JWT_SECRET is missing from .env",
+                "Set SUPABASE_URL (JWKS) and/or SUPABASE_JWT_SECRET (legacy HS256)",
             )
         )
         return results
 
+    if settings.supabase_jwt_secret:
+        detail = "SUPABASE_JWT_SECRET loaded (legacy HS256)"
+    else:
+        detail = "SUPABASE_URL loaded (JWKS / ES256 verification)"
     results.append(
         CheckResult(
-            "jwt_secret_configured",
+            "jwt_verification_configured",
             True,
-            "SUPABASE_JWT_SECRET is loaded",
+            detail,
         )
     )
 
@@ -108,6 +113,15 @@ def run_auth_checks(
             )
         )
     else:
+        if not settings.supabase_jwt_secret:
+            results.append(
+                CheckResult(
+                    "local_jwt_created",
+                    False,
+                    "SUPABASE_JWT_SECRET is not set — use --email and --password for real login tokens",
+                )
+            )
+            return results
         token = create_supabase_token(
             auth_user_id=AUTH_FED_ADMIN_ID,
             email="grace.wanjiru@kncl.local",

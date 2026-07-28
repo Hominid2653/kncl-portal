@@ -226,12 +226,22 @@ The API accepts Supabase access tokens via:
 Authorization: Bearer <supabase_access_token>
 ```
 
-The backend verifies the JWT using `SUPABASE_JWT_SECRET`, reads the `sub` claim as the Supabase auth user ID, and loads the matching `user_profiles` row for application role and permissions.
+The backend verifies Supabase access tokens and loads the matching `user_profiles` row from the `sub` claim.
+
+**Verification modes:**
+
+| Project type | Config | Algorithm |
+|--------------|--------|-----------|
+| Legacy | `SUPABASE_JWT_SECRET` | HS256 |
+| Newer (default) | `SUPABASE_URL` (JWKS auto-fetched) | ES256 / RS256 |
+
+At least one of `SUPABASE_URL` or `SUPABASE_JWT_SECRET` must be set. Real login tokens from newer Supabase projects are verified via JWKS at `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`. Legacy HS256 tokens still work when `SUPABASE_JWT_SECRET` is configured.
 
 Add to `.env`:
 
 ```
-SUPABASE_JWT_SECRET=your_supabase_jwt_secret
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_JWT_SECRET=your_legacy_jwt_secret   # optional for older projects
 ```
 
 In development/test, mock headers remain available when `AUTH_MOCK_ENABLED=true`:

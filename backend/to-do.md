@@ -27,6 +27,7 @@ Last updated: 2026-07-28
 - [x] Registration workflow (submit, approve, reject, notifications, audit logs)
 - [x] File uploads via Supabase Storage (`POST /documents/upload`, signed download URLs)
 - [x] Dashboard APIs (`/dashboard/admin`, `/dashboard/club`, `/dashboard/player`)
+- [x] Real Supabase JWT verification (HS256 legacy + JWKS ES256/RS256)
 
 ---
 
@@ -50,14 +51,9 @@ Moved to Completed. See `RegistrationService` and `tests/test_registration_workf
 
 Moved to Completed. See `StorageService`, `DocumentService`, and `tests/test_document_upload.py`.
 
-### 4. Real Supabase JWT verification (if needed)
+### 4. Real Supabase JWT verification — done
 
-Backend currently uses legacy HS256 `SUPABASE_JWT_SECRET`. Newer Supabase projects may use ECC (P-256).
-
-- [ ] Confirm real Supabase login tokens work with current setup
-- [ ] If not: add JWKS / ECC token verification support
-- [ ] Update `.env.example` and readme with correct secret/key guidance
-- [ ] Tests for both token types (if applicable)
+Supports legacy HS256 (`SUPABASE_JWT_SECRET`) and newer ECC/RSA tokens via JWKS (`SUPABASE_URL`). See `app/core/security.py`, `app/core/supabase_jwks.py`, and `tests/test_jwt_verification.py`.
 
 ### 5. Dashboard / analytics APIs — done
 
