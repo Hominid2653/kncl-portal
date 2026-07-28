@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.dependencies import get_db
+from app.dependencies.auth import CurrentUser, require_federation_admin
 from app.schemas.league import (
     LeagueCreate,
     LeagueListResponse,
@@ -39,6 +40,7 @@ async def list_leagues(
 async def create_league(
     payload: LeagueCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_federation_admin),
 ):
     return await service.create(
         db,
