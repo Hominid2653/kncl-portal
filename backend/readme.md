@@ -248,6 +248,36 @@ Run tests:
 pytest tests/ -q
 ```
 
+Automated auth smoke test (server must be running):
+
+```bash
+# Uses seeded user + locally generated JWT
+python -m app.auth.check
+
+# Uses mock headers instead of JWT
+python -m app.auth.check --mock
+
+# Uses a real Supabase login
+python -m app.auth.check --email you@example.com --password your-password
+```
+
+---
+
+## Authorization
+
+Role-based access control is enforced on every endpoint via `AuthorizationService`.
+
+| Role | Capabilities |
+|------|--------------|
+| `FEDERATION_ADMIN` | Full access; creates leagues, seasons, clubs, audit logs |
+| `LEAGUE_COORDINATOR` | Read all scoped resources; manage registrations, transfers, approvals |
+| `CLUB_ADMIN` | Manage own club(s), members, registrations, transfers, documents |
+| `PLAYER` | Read/update own profile, player record, notifications |
+
+List endpoints automatically scope results by role. Single-resource GET endpoints call `ensure_can_read_*` checks after fetch.
+
+Authorization tests: `pytest tests/test_authorization.py -q`
+
 ---
 
 ## Coding Standards

@@ -4,23 +4,30 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.common import parse_filters
-from app.dependencies.auth import CurrentUser, require_federation_admin
+from app.dependencies.auth import (
+    CurrentUser,
+    require_authenticated,
+    require_club_leadership
+)
 from app.dependencies.dependencies import get_db
 from app.schemas.document import (
     DocumentCreate,
     DocumentListResponse,
     DocumentResponse,
-    DocumentUpdate,
+    DocumentUpdate
 )
+from app.services.authorization_service import AuthorizationService
 from app.services.document_service import DocumentService
 
 router = APIRouter(prefix='/documents', tags=['Documents'])
 service = DocumentService()
+authz = AuthorizationService()
 
 
 @router.get('/', response_model=DocumentListResponse, summary='List Documents')
 async def list_document(
     db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
     page: int = Query(1, ge=1, description='Page number'),
     page_size: int = Query(20, ge=1, le=100, description='Items per page'),
     sort_by: str | None = Query(None, description='Field to sort by'),
@@ -29,6 +36,7 @@ async def list_document(
     filter: list[str] | None = Query(default=None, alias='filter', description='Filter as field=value'),
 ):
     filters = parse_filters(filter)
+    filters = await authz.scope_document_filters(db, current_user, filters)
     return await service.list(
         db,
         filters=filters,
@@ -42,18 +50,23 @@ async def list_document(
 
 
 @router.get('/{item_id}', response_model=DocumentResponse, summary='Get Document by id')
-async def get_document(item_id: UUID, db: AsyncSession = Depends(get_db)):
-    return await service.get(db, item_id)
+async def get_document(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    item = await service.get(db, item_id)
+    await authz.ensure_can_read_document(db, current_user, item)
+    return item
 
 
 @router.post('/', response_model=DocumentResponse, summary='Create Document', status_code=201)
 async def create_document(
     payload: DocumentCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_federation_admin),
+    current_user: CurrentUser = Depends(require_club_leadership),
 ):
     return await service.create(db, payload)
-
 
 
 @router.patch('/{item_id}', response_model=DocumentResponse, summary='Update Document')
@@ -61,18 +74,21 @@ async def update_document(
     item_id: UUID,
     payload: DocumentUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_federation_admin),
+    current_user: CurrentUser = Depends(require_club_leadership),
 ):
     payload_data = payload.model_dump(exclude_unset=True)
+    item = await service.get(db, item_id)
+    await authz.ensure_can_read_document(db, current_user, item)
     return await service.update(db, item_id, payload_data)
-
 
 
 @router.delete('/{item_id}', status_code=204, summary='Delete Document')
 async def delete_document(
     item_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_federation_admin),
+    current_user: CurrentUser = Depends(require_club_leadership),
 ):
+    item = await service.get(db, item_id)
+    await authz.ensure_can_read_document(db, current_user, item)
     await service.delete(db, item_id)
     return Response(status_code=204)

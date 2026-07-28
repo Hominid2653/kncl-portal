@@ -116,3 +116,5 @@ require_club_leadership = require_role(
     UserRole.LEAGUE_COORDINATOR,
     UserRole.CLUB_ADMIN,
 )
+
+require_authenticated = get_current_user

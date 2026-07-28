@@ -4,8 +4,14 @@ from tests.conftest import LIST_ENDPOINTS, SEEDED_IDS
 
 
 @pytest.mark.parametrize("path", LIST_ENDPOINTS)
-def test_list_endpoints_return_seeded_collections(client: TestClient, path: str) -> None:
-    response = client.get(path)
+def test_list_endpoints_return_seeded_collections(
+    client: TestClient,
+    admin_headers: dict[str, str],
+    league_coord_headers: dict[str, str],
+    path: str,
+) -> None:
+    headers = league_coord_headers if path == "/api/v1/audit-logs/" else admin_headers
+    response = client.get(path, headers=headers)
 
     assert response.status_code == 200
     body = response.json()
@@ -23,23 +29,38 @@ def test_list_endpoints_return_seeded_collections(client: TestClient, path: str)
         ("/api/v1/players/{id}", "player"),
     ],
 )
-def test_get_by_id_returns_seeded_resource(client: TestClient, path: str, id_key: str) -> None:
+def test_get_by_id_returns_seeded_resource(
+    client: TestClient,
+    admin_headers: dict[str, str],
+    path: str,
+    id_key: str,
+) -> None:
     resource_id = SEEDED_IDS[id_key]
-    response = client.get(path.format(id=resource_id))
+    response = client.get(path.format(id=resource_id), headers=admin_headers)
 
     assert response.status_code == 200
     assert response.json()["id"] == str(resource_id)
 
 
-def test_get_by_id_returns_404_for_unknown_resource(client: TestClient) -> None:
-    response = client.get("/api/v1/clubs/00000000-0000-0000-0000-000000000099")
+def test_get_by_id_returns_404_for_unknown_resource(
+    client: TestClient,
+    admin_headers: dict[str, str],
+) -> None:
+    response = client.get(
+        "/api/v1/clubs/00000000-0000-0000-0000-000000000099",
+        headers=admin_headers,
+    )
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "resource_not_found"
 
 
-def test_list_supports_pagination(client: TestClient) -> None:
-    response = client.get("/api/v1/players/", params={"page": 1, "page_size": 2})
+def test_list_supports_pagination(client: TestClient, admin_headers: dict[str, str]) -> None:
+    response = client.get(
+        "/api/v1/players/",
+        params={"page": 1, "page_size": 2},
+        headers=admin_headers,
+    )
 
     assert response.status_code == 200
     body = response.json()
@@ -47,20 +68,41 @@ def test_list_supports_pagination(client: TestClient) -> None:
     assert body["total"] >= len(body["items"])
 
 
-def test_list_supports_search(client: TestClient) -> None:
-    response = client.get("/api/v1/players/", params={"search": "elias"})
+def test_list_supports_search(client: TestClient, admin_headers: dict[str, str]) -> None:
+    response = client.get(
+        "/api/v1/players/",
+        params={"search": "elias"},
+        headers=admin_headers,
+    )
 
     assert response.status_code == 200
     assert response.json()["total"] >= 1
 
 
-def test_list_supports_filter(client: TestClient) -> None:
+def test_list_supports_filter(client: TestClient, admin_headers: dict[str, str]) -> None:
     league_id = SEEDED_IDS["league"]
-    response = client.get("/api/v1/clubs/", params=[("filter", f"league_id={league_id}")])
+    response = client.get(
+        "/api/v1/clubs/",
+        params=[("filter", f"league_id={league_id}")],
+        headers=admin_headers,
+    )
 
     assert response.status_code == 200
     assert response.json()["total"] >= 1
     assert all(item["league_id"] == str(league_id) for item in response.json()["items"])
+
+
+def test_list_requires_authentication_when_mock_disabled(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "auth_mock_enabled", False)
+    response = client.get("/api/v1/leagues/")
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "unauthorized"
 
 
 def test_create_requires_authentication_when_mock_disabled(
@@ -79,10 +121,11 @@ def test_create_requires_authentication_when_mock_disabled(
     assert response.json()["error"]["code"] == "unauthorized"
 
 
-def test_create_without_admin_role_is_rejected(client: TestClient) -> None:
+def test_create_without_admin_role_is_rejected(client: TestClient, player_headers: dict[str, str]) -> None:
     response = client.post(
         "/api/v1/leagues/",
         json={"name": "Unauthorized League", "description": "Should fail"},
+        headers=player_headers,
     )
 
     assert response.status_code == 403
