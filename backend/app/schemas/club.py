@@ -1,10 +1,12 @@
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 from app.schemas.common import ListResponse, TimestampSchema
 
 
 class ClubCreate(BaseModel):
-    league_id: str
+    league_id: UUID
     name: str = Field(..., min_length=3, max_length=150)
     county: str | None = Field(default=None, max_length=100)
     description: str | None = Field(default=None, max_length=500)
@@ -13,7 +15,7 @@ class ClubCreate(BaseModel):
 
 
 class ClubUpdate(BaseModel):
-    league_id: str | None = None
+    league_id: UUID | None = None
     name: str | None = Field(default=None, min_length=3, max_length=150)
     county: str | None = Field(default=None, max_length=100)
     description: str | None = Field(default=None, max_length=500)
@@ -22,7 +24,7 @@ class ClubUpdate(BaseModel):
 
 
 class ClubResponse(TimestampSchema):
-    league_id: str
+    league_id: UUID
     name: str
     county: str | None = None
     description: str | None = None

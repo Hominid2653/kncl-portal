@@ -1,4 +1,6 @@
 from datetime import datetime
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from app.models.enums import ApprovalDecision
@@ -6,8 +8,8 @@ from app.schemas.common import ListResponse, TimestampSchema
 
 
 class TransferApprovalCreate(BaseModel):
-    transfer_id: str
-    approved_by: str
+    transfer_id: UUID
+    approved_by: UUID
     decision: ApprovalDecision
     remarks: str | None = None
     approved_at: datetime
@@ -19,8 +21,8 @@ class TransferApprovalUpdate(BaseModel):
 
 
 class TransferApprovalResponse(TimestampSchema):
-    transfer_id: str
-    approved_by: str
+    transfer_id: UUID
+    approved_by: UUID
     decision: ApprovalDecision
     remarks: str | None = None
     approved_at: datetime

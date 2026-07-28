@@ -1,11 +1,13 @@
 from datetime import date
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 from app.schemas.common import ListResponse, TimestampSchema
 
 
 class SeasonCreate(BaseModel):
-    league_id: str
+    league_id: UUID
     name: str = Field(..., min_length=3, max_length=100)
     year: int
     registration_open: bool = False
@@ -23,7 +25,7 @@ class SeasonUpdate(BaseModel):
 
 
 class SeasonResponse(TimestampSchema):
-    league_id: str
+    league_id: UUID
     name: str
     year: int
     registration_open: bool

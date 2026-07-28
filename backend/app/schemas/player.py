@@ -1,11 +1,13 @@
 from datetime import date
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 from app.schemas.common import ListResponse, TimestampSchema
 
 
 class PlayerCreate(BaseModel):
-    user_profile_id: str
+    user_profile_id: UUID
     federation_id: str | None = Field(default=None, max_length=50)
     fide_id: str | None = Field(default=None, max_length=50)
     chesscom_username: str | None = Field(default=None, max_length=100)
@@ -32,7 +34,7 @@ class PlayerUpdate(BaseModel):
 
 
 class PlayerResponse(TimestampSchema):
-    user_profile_id: str
+    user_profile_id: UUID
     federation_id: str | None = None
     fide_id: str | None = None
     chesscom_username: str | None = None
