@@ -7,11 +7,11 @@ from app.models.base import BaseModel
 class League(BaseModel):
     __tablename__ = "leagues"
 
-    name = mapped_column(
-    String(150),
-    unique=True,
-    nullable=False,
-)
+    name: Mapped[str] = mapped_column(
+        String(150),
+        unique=True,
+        nullable=False,
+    )
     description: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,

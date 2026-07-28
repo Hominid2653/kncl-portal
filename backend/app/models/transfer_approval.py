@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -11,13 +12,13 @@ from app.models.enums import ApprovalDecision
 class TransferApproval(BaseModel):
     __tablename__ = "transfer_approvals"
 
-    transfer_id: Mapped[PG_UUID] = mapped_column(
+    transfer_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("transfers.id", ondelete="CASCADE"),
         nullable=False,
     )
 
-    approved_by: Mapped[PG_UUID] = mapped_column(
+    approved_by: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("user_profiles.id", ondelete="CASCADE"),
         nullable=False,

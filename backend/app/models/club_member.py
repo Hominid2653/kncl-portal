@@ -10,6 +10,14 @@ from app.models.base import BaseModel
 class ClubMember(BaseModel):
     __tablename__ = "club_members"
 
+    __table_args__ = (
+        UniqueConstraint(
+            "club_id",
+            "user_profile_id",
+            name="uq_club_member",
+        ),
+    )
+
     club_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("clubs.id", ondelete="CASCADE"),
@@ -25,12 +33,3 @@ class ClubMember(BaseModel):
     club = relationship("Club", back_populates="members")
 
     user_profile = relationship("UserProfile", back_populates="club_memberships")
-    
-    
-__table_args__ = (
-    UniqueConstraint(
-        "club_id",
-        "user_profile_id",
-        name="uq_club_member",
-    ),
-)
