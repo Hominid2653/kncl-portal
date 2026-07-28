@@ -92,6 +92,12 @@ pytest tests/ -q
 
 ## CORS (frontend on a different port)
 
-If the React app runs on `http://localhost:5173` and you get CORS errors, ask the backend team to add CORS middleware for your dev origin. This is not enabled by default yet.
+CORS is configured via `CORS_ORIGINS` (comma-separated) in backend `.env`.
 
-Typical Vite dev URL: `http://localhost:5173`
+Default local:
+
+```
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+For production, set this on Render to your deployed frontend URL. See [render.md](./render.md).

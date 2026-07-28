@@ -15,6 +15,7 @@ The backend is feature-complete for MVP workflows: authentication, CRUD, registr
 | 3 | [Test users & seed data](./test-users.md) | Seeded roles, UUIDs, mock headers |
 | 4 | [Workflows](./workflows.md) | Registration, transfer, uploads, external accounts |
 | 5 | [API conventions](./api-conventions.md) | Errors, pagination, list responses, CORS notes |
+| 6 | [Render deployment](./render.md) | Deploy backend for shared staging API |
 
 ---
 
@@ -31,7 +32,7 @@ Interactive docs (server running): **http://localhost:8000/docs**
 | Environment | Base URL |
 |-------------|----------|
 | Local | `http://127.0.0.1:8000/api/v1` |
-| Staging / production | _TBD — backend team will provide_ |
+| Staging / production | `https://<your-service>.onrender.com/api/v1` — see [render.md](./render.md) |
 
 All routes below are relative to `/api/v1`.
 
