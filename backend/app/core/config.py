@@ -6,12 +6,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "KNCL Transfer Portal"
     app_env: str = "development"
+    auth_mock_enabled: bool = True
+    auth_mock_default_role: str = "PLAYER"
 
     database_url: str
 
     supabase_url: str
     supabase_anon_key: str
     supabase_service_role_key: str
+    supabase_jwt_secret: str = ""
 
     secret_key: str
 

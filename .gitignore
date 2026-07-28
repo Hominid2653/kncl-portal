@@ -1,7 +1,13 @@
-.env*
+.env
 .env.local
 .env.development.local
 __pycache__/
 .venv/
 backend/.venv/
 venv/
+.cursor/
+.cursorignore
+vscode.md
+jj.md
+vscode.md
+docs/endpoints.md

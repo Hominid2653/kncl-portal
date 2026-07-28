@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from sqlalchemy import text
 
+from app.core.exceptions import DatabaseUnavailable
 from app.database.database import engine
 
 router = APIRouter(tags=["Health"])
@@ -22,8 +23,5 @@ def database_health():
             "status": "ok",
         }
 
-    except Exception as e:
-        return {
-            "database": "disconnected",
-            "error": str(e),
-        }
+    except Exception as exc:
+        raise DatabaseUnavailable("Database connection is unavailable.") from exc
