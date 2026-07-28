@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     supabase_storage_bucket: str = "documents"
     max_upload_size_bytes: int = 10 * 1024 * 1024
 
+    lichess_base_url: str = "https://lichess.org"
+
     secret_key: str
 
     model_config = SettingsConfigDict(

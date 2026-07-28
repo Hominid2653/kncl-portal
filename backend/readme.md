@@ -166,9 +166,11 @@ Supabase PostgreSQL
 
 ### Lichess
 
-- Verify username
-- Fetch rating
-- Fetch profile
+- `GET /integrations/lichess/users/{username}` — verify username and fetch ratings/profile
+- `GET /players/{id}/lichess` — fetch profile for a stored player username
+- `POST /players/{id}/lichess/sync` — sync blitz/rapid/classical ratings into the player record
+
+Uses the public Lichess API (`LICHESS_BASE_URL`, default `https://lichess.org`).
 
 ---
 

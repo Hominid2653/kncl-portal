@@ -17,11 +17,14 @@ from app.schemas.player import (
     PlayerResponse,
     PlayerUpdate
 )
+from app.schemas.lichess import LichessUserResponse
 from app.services.authorization_service import AuthorizationService
+from app.services.lichess_service import LichessService
 from app.services.player_service import PlayerService
 
 router = APIRouter(prefix='/players', tags=['Players'])
 service = PlayerService()
+lichess_service = LichessService()
 authz = AuthorizationService()
 
 
@@ -68,6 +71,32 @@ async def create_player(
     current_user: CurrentUser = Depends(require_club_leadership),
 ):
     return await service.create(db, payload)
+
+
+@router.get('/{item_id}/lichess', response_model=LichessUserResponse, summary='Get player Lichess profile')
+async def get_player_lichess_profile(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    player = await service.get(db, item_id)
+    await authz.ensure_can_read_player_with_clubs(db, current_user, player)
+    return await lichess_service.lookup_player(player)
+
+
+@router.post(
+    '/{item_id}/lichess/sync',
+    response_model=PlayerResponse,
+    summary='Sync player ratings from Lichess',
+)
+async def sync_player_lichess_ratings(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    player = await service.get(db, item_id)
+    await authz.ensure_can_read_player_with_clubs(db, current_user, player)
+    return await lichess_service.sync_player_ratings(db, item_id)
 
 
 @router.patch('/{item_id}', response_model=PlayerResponse, summary='Update Player')
