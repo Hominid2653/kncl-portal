@@ -29,6 +29,8 @@ Last updated: 2026-07-28
 - [x] Dashboard APIs (`/dashboard/admin`, `/dashboard/club`, `/dashboard/player`)
 - [x] Real Supabase JWT verification (HS256 legacy + JWKS ES256/RS256)
 - [x] Lichess integration (verify username, fetch profile/ratings, sync player ratings)
+- [x] Chess.com integration (verify username, fetch profile/ratings, sync player ratings)
+- [x] External account verification (`lichess_verified`, `chesscom_verified`, bio/name/admin flows)
 
 ---
 
@@ -60,14 +62,9 @@ Supports legacy HS256 (`SUPABASE_JWT_SECRET`) and newer ECC/RSA tokens via JWKS 
 
 Moved to Completed. See `DashboardService` and `tests/test_dashboard.py`.
 
-### 6. External integrations
+### 6. External integrations — done
 
-Chess.com and Lichess (lower priority than workflows).
-
-- [ ] Chess.com: verify username, fetch rating/profile
-- [x] Lichess: verify username, fetch rating/profile
-- [x] Sync Lichess ratings into player record (`POST /players/{id}/lichess/sync`)
-- [x] Tests with mocked external API responses (Lichess)
+Chess.com and Lichess integrations with verification, rating sync, caching, and rate limiting. See `tests/test_lichess_integration.py` and `tests/test_external_account_helpers.py`.
 
 ### 7. Frontend handoff
 

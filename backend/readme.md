@@ -160,17 +160,23 @@ Supabase PostgreSQL
 
 ### Chess.com
 
-- Verify username
-- Fetch rating
-- Fetch profile
+- `GET /integrations/chesscom/users/{username}` — verify username and fetch ratings/profile
+- `GET /players/{id}/chesscom` — compare stored vs live ratings
+- `POST /players/{id}/chesscom/sync` — sync ratings into player record
+- `GET/POST /players/{id}/chesscom/verify` — name-match verification
+- `POST /players/{id}/chesscom/verify/admin` — club admin attestation
 
 ### Lichess
 
 - `GET /integrations/lichess/users/{username}` — verify username and fetch ratings/profile
-- `GET /players/{id}/lichess` — fetch profile for a stored player username
-- `POST /players/{id}/lichess/sync` — sync blitz/rapid/classical ratings into the player record
+- `GET /players/{id}/lichess` — compare stored vs live ratings (with drift)
+- `POST /players/{id}/lichess/sync` — sync ratings into player record
+- `GET/POST /players/{id}/lichess/verify` — bio code verification
+- `POST /players/{id}/lichess/verify/admin` — club admin attestation
 
-Uses the public Lichess API (`LICHESS_BASE_URL`, default `https://lichess.org`).
+PATCH `/players/{id}` validates usernames against live APIs and supports `?sync_lichess=true` / `?sync_chesscom=true`.
+
+External lookups are cached (10 min) and rate-limited (30 req/min per user).
 
 ---
 

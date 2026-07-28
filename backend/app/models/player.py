@@ -1,7 +1,7 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import Date, ForeignKey, Index, Integer, String
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import BaseModel
@@ -26,6 +26,15 @@ class Player(BaseModel):
     fide_id: Mapped[str | None] = mapped_column(String(50))
     chesscom_username: Mapped[str | None] = mapped_column(String(100))
     lichess_username: Mapped[str | None] = mapped_column(String(100))
+
+    lichess_verified: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    lichess_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    lichess_user_id: Mapped[str | None] = mapped_column(String(100))
+    lichess_verification_code: Mapped[str | None] = mapped_column(String(32))
+
+    chesscom_verified: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    chesscom_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    chesscom_verification_code: Mapped[str | None] = mapped_column(String(32))
 
     rapid_rating: Mapped[int | None] = mapped_column(Integer)
     blitz_rating: Mapped[int | None] = mapped_column(Integer)
