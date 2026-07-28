@@ -25,7 +25,11 @@ def test_unknown_routes_use_the_standard_error_contract() -> None:
 
 
 def test_request_validation_errors_do_not_include_raw_input() -> None:
-    response = client.post("/api/v1/leagues/", json={"name": "x"})
+    response = client.post(
+        "/api/v1/leagues/",
+        json={"name": "x"},
+        headers={"X-Mock-Role": "FEDERATION_ADMIN"},
+    )
 
     assert response.status_code == 422
     error = response.json()["error"]
