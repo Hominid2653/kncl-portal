@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -39,6 +39,10 @@ class PlayerResponse(TimestampSchema):
     fide_id: str | None = None
     chesscom_username: str | None = None
     lichess_username: str | None = None
+    lichess_verified: bool = False
+    lichess_verified_at: datetime | None = None
+    chesscom_verified: bool = False
+    chesscom_verified_at: datetime | None = None
     rapid_rating: int | None = None
     blitz_rating: int | None = None
     classical_rating: int | None = None

@@ -4,6 +4,7 @@ import httpx
 
 from app.core.config import settings
 from app.core.exceptions import ExternalServiceError, ResourceNotFound, ValidationError
+from app.integrations.external_cache import get_cached_payload, set_cached_payload
 
 LICHESS_USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_-]{0,19}$")
 
@@ -25,6 +26,11 @@ class LichessClient:
 
     async def get_user(self, username: str) -> dict:
         normalized = self.normalize_username(username)
+        cache_key = f"lichess:user:{normalized.lower()}"
+        cached = get_cached_payload(cache_key)
+        if cached is not None:
+            return cached
+
         url = f"{self.base_url}/api/user/{normalized}"
 
         try:
@@ -44,4 +50,5 @@ class LichessClient:
         payload = response.json()
         if not payload.get("username"):
             raise ExternalServiceError("Lichess API returned an invalid user payload.")
+        set_cached_payload(cache_key, payload)
         return payload
