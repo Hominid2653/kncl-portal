@@ -61,18 +61,22 @@ def test_named_unique_constraints_are_attached_to_their_models() -> None:
         assert constraint_name in constraints
 
 
-def test_critical_foreign_keys_use_database_cascades() -> None:
-    models_and_columns = {
-        Registration: ("player_id", "club_id", "season_id"),
-        Transfer: ("registration_id", "from_club_id", "to_club_id"),
-        Document: ("transfer_id", "uploaded_by"),
-        ClubMember: ("club_id", "user_profile_id"),
+def test_critical_foreign_keys_use_expected_delete_policies() -> None:
+    expected_policies = {
+        Registration: {"player_id": "CASCADE", "club_id": "CASCADE", "season_id": "CASCADE"},
+        Transfer: {
+            "registration_id": "CASCADE",
+            "from_club_id": "RESTRICT",
+            "to_club_id": "RESTRICT",
+        },
+        Document: {"transfer_id": "CASCADE", "uploaded_by": "CASCADE"},
+        ClubMember: {"club_id": "CASCADE", "user_profile_id": "CASCADE"},
     }
 
-    for model, column_names in models_and_columns.items():
-        for column_name in column_names:
+    for model, policies in expected_policies.items():
+        for column_name, expected_policy in policies.items():
             foreign_key = next(iter(model.__table__.c[column_name].foreign_keys))
-            assert foreign_key.ondelete == "CASCADE"
+            assert foreign_key.ondelete == expected_policy
 
 
 def test_league_name_is_a_typed_mapped_column() -> None:
