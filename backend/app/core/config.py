@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     supabase_anon_key: str
     supabase_service_role_key: str
     supabase_jwt_secret: str = ""
+    supabase_storage_bucket: str = "documents"
+    max_upload_size_bytes: int = 10 * 1024 * 1024
 
     secret_key: str
 
