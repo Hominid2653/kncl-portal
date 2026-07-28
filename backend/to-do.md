@@ -28,6 +28,7 @@ Last updated: 2026-07-28
 - [x] File uploads via Supabase Storage (`POST /documents/upload`, signed download URLs)
 - [x] Dashboard APIs (`/dashboard/admin`, `/dashboard/club`, `/dashboard/player`)
 - [x] Real Supabase JWT verification (HS256 legacy + JWKS ES256/RS256)
+- [x] Lichess integration (verify username, fetch profile/ratings, sync player ratings)
 
 ---
 
@@ -64,9 +65,9 @@ Moved to Completed. See `DashboardService` and `tests/test_dashboard.py`.
 Chess.com and Lichess (lower priority than workflows).
 
 - [ ] Chess.com: verify username, fetch rating/profile
-- [ ] Lichess: verify username, fetch rating/profile
-- [ ] Optional: sync ratings into player record on profile update
-- [ ] Tests with mocked external API responses
+- [x] Lichess: verify username, fetch rating/profile
+- [x] Sync Lichess ratings into player record (`POST /players/{id}/lichess/sync`)
+- [x] Tests with mocked external API responses (Lichess)
 
 ### 7. Frontend handoff
 
