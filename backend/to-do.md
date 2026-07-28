@@ -20,12 +20,13 @@ Last updated: 2026-07-28
 - [x] Supabase JWT authentication (Bearer token + dev mock headers)
 - [x] Role-based authorization on all endpoints
 - [x] List scoping and per-resource access checks (`AuthorizationService`)
-- [x] Integration and authorization test suite (87+ tests passing)
+- [x] Integration and authorization test suite (94+ tests passing)
 - [x] API documentation (`docs/endpoints.md`)
 - [x] Auth smoke test (`python -m app.auth.check`)
 - [x] Transfer workflow (submit, approve, reject, cancel, notifications, audit logs)
 - [x] Registration workflow (submit, approve, reject, notifications, audit logs)
 - [x] File uploads via Supabase Storage (`POST /documents/upload`, signed download URLs)
+- [x] Dashboard APIs (`/dashboard/admin`, `/dashboard/club`, `/dashboard/player`)
 
 ---
 
@@ -58,16 +59,9 @@ Backend currently uses legacy HS256 `SUPABASE_JWT_SECRET`. Newer Supabase projec
 - [ ] Update `.env.example` and readme with correct secret/key guidance
 - [ ] Tests for both token types (if applicable)
 
-### 5. Dashboard / analytics APIs
+### 5. Dashboard / analytics APIs — done
 
-Mentioned in readme (`/dashboard`) but not implemented.
-
-- [ ] Transfer counts by status
-- [ ] Pending approvals per club
-- [ ] Registrations per season
-- [ ] Recent activity feed
-- [ ] Role-scoped dashboard data
-- [ ] Tests and docs update
+Moved to Completed. See `DashboardService` and `tests/test_dashboard.py`.
 
 ### 6. External integrations
 
