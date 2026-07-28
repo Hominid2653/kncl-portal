@@ -160,15 +160,23 @@ Supabase PostgreSQL
 
 ### Chess.com
 
-- Verify username
-- Fetch rating
-- Fetch profile
+- `GET /integrations/chesscom/users/{username}` — verify username and fetch ratings/profile
+- `GET /players/{id}/chesscom` — compare stored vs live ratings
+- `POST /players/{id}/chesscom/sync` — sync ratings into player record
+- `GET/POST /players/{id}/chesscom/verify` — name-match verification
+- `POST /players/{id}/chesscom/verify/admin` — club admin attestation
 
 ### Lichess
 
-- Verify username
-- Fetch rating
-- Fetch profile
+- `GET /integrations/lichess/users/{username}` — verify username and fetch ratings/profile
+- `GET /players/{id}/lichess` — compare stored vs live ratings (with drift)
+- `POST /players/{id}/lichess/sync` — sync ratings into player record
+- `GET/POST /players/{id}/lichess/verify` — bio code verification
+- `POST /players/{id}/lichess/verify/admin` — club admin attestation
+
+PATCH `/players/{id}` validates usernames against live APIs and supports `?sync_lichess=true` / `?sync_chesscom=true`.
+
+External lookups are cached (10 min) and rate-limited (30 req/min per user).
 
 ---
 
@@ -226,12 +234,22 @@ The API accepts Supabase access tokens via:
 Authorization: Bearer <supabase_access_token>
 ```
 
-The backend verifies the JWT using `SUPABASE_JWT_SECRET`, reads the `sub` claim as the Supabase auth user ID, and loads the matching `user_profiles` row for application role and permissions.
+The backend verifies Supabase access tokens and loads the matching `user_profiles` row from the `sub` claim.
+
+**Verification modes:**
+
+| Project type | Config | Algorithm |
+|--------------|--------|-----------|
+| Legacy | `SUPABASE_JWT_SECRET` | HS256 |
+| Newer (default) | `SUPABASE_URL` (JWKS auto-fetched) | ES256 / RS256 |
+
+At least one of `SUPABASE_URL` or `SUPABASE_JWT_SECRET` must be set. Real login tokens from newer Supabase projects are verified via JWKS at `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`. Legacy HS256 tokens still work when `SUPABASE_JWT_SECRET` is configured.
 
 Add to `.env`:
 
 ```
-SUPABASE_JWT_SECRET=your_supabase_jwt_secret
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_JWT_SECRET=your_legacy_jwt_secret   # optional for older projects
 ```
 
 In development/test, mock headers remain available when `AUTH_MOCK_ENABLED=true`:

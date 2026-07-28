@@ -37,3 +37,13 @@ class Forbidden(KNCLException):
 class DatabaseUnavailable(KNCLException):
     status_code = 503
     error_code = "database_unavailable"
+
+
+class ExternalServiceError(KNCLException):
+    status_code = 502
+    error_code = "external_service_error"
+
+
+class RateLimitExceeded(KNCLException):
+    status_code = 429
+    error_code = "rate_limit_exceeded"

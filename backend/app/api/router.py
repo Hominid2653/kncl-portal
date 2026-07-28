@@ -5,7 +5,9 @@ from app.api.v1.endpoints import (
     audit_logs,
     clubs,
     club_members,
+    dashboard,
     documents,
+    integrations,
     leagues,
     notifications,
     players,
@@ -31,3 +33,5 @@ api_router.include_router(transfer_approvals.router)
 api_router.include_router(documents.router)
 api_router.include_router(notifications.router)
 api_router.include_router(audit_logs.router)
+api_router.include_router(dashboard.router)
+api_router.include_router(integrations.router)
