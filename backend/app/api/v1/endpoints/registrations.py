@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Body, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.common import parse_filters
@@ -9,14 +9,14 @@ from app.dependencies.auth import (
     require_authenticated,
     require_club_leadership,
     require_federation_admin,
-    require_league_leadership
+    require_league_leadership,
 )
 from app.dependencies.dependencies import get_db
 from app.schemas.registration import (
+    RegistrationAction,
     RegistrationCreate,
     RegistrationListResponse,
     RegistrationResponse,
-    RegistrationUpdate
 )
 from app.services.authorization_service import AuthorizationService
 from app.services.registration_service import RegistrationService
@@ -51,6 +51,48 @@ async def list_registration(
     )
 
 
+@router.post('/', response_model=RegistrationResponse, summary='Submit Registration', status_code=201)
+async def create_registration(
+    payload: RegistrationCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_club_leadership),
+):
+    await authz.ensure_can_manage_club_by_id(db, current_user, payload.club_id)
+    return await service.submit(db, payload, current_user)
+
+
+@router.post(
+    '/{item_id}/approve',
+    response_model=RegistrationResponse,
+    summary='Approve Registration',
+)
+async def approve_registration(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_league_leadership),
+    payload: RegistrationAction = Body(default_factory=RegistrationAction),
+):
+    registration = await service.get(db, item_id)
+    await authz.ensure_can_read_registration(db, current_user, registration)
+    return await service.approve(db, item_id, current_user, payload)
+
+
+@router.post(
+    '/{item_id}/reject',
+    response_model=RegistrationResponse,
+    summary='Reject Registration',
+)
+async def reject_registration(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_league_leadership),
+    payload: RegistrationAction = Body(default_factory=RegistrationAction),
+):
+    registration = await service.get(db, item_id)
+    await authz.ensure_can_read_registration(db, current_user, registration)
+    return await service.reject(db, item_id, current_user, payload)
+
+
 @router.get('/{item_id}', response_model=RegistrationResponse, summary='Get Registration by id')
 async def get_registration(
     item_id: UUID,
@@ -60,27 +102,6 @@ async def get_registration(
     item = await service.get(db, item_id)
     await authz.ensure_can_read_registration(db, current_user, item)
     return item
-
-
-@router.post('/', response_model=RegistrationResponse, summary='Create Registration', status_code=201)
-async def create_registration(
-    payload: RegistrationCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_club_leadership),
-):
-    await authz.ensure_can_manage_club_by_id(db, current_user, payload.club_id)
-    return await service.create(db, payload)
-
-
-@router.patch('/{item_id}', response_model=RegistrationResponse, summary='Update Registration')
-async def update_registration(
-    item_id: UUID,
-    payload: RegistrationUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_league_leadership),
-):
-    payload_data = payload.model_dump(exclude_unset=True)
-    return await service.update(db, item_id, payload_data)
 
 
 @router.delete('/{item_id}', status_code=204, summary='Delete Registration')
