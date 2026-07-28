@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,9 +14,9 @@ class RegistrationRepository(BaseRepository[Registration]):
     async def get_by_player_season(
         self,
         db: AsyncSession,
-        player_id: str,
-        season_id: str,
-    ):
+        player_id: UUID,
+        season_id: UUID,
+    ) -> Registration | None:
         result = await db.execute(
             select(Registration).where(
                 Registration.player_id == player_id,

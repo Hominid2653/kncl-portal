@@ -20,10 +20,11 @@ Last updated: 2026-07-28
 - [x] Supabase JWT authentication (Bearer token + dev mock headers)
 - [x] Role-based authorization on all endpoints
 - [x] List scoping and per-resource access checks (`AuthorizationService`)
-- [x] Integration and authorization test suite (77 tests passing)
+- [x] Integration and authorization test suite (82+ tests passing)
 - [x] API documentation (`docs/endpoints.md`)
 - [x] Auth smoke test (`python -m app.auth.check`)
 - [x] Transfer workflow (submit, approve, reject, cancel, notifications, audit logs)
+- [x] Registration workflow (submit, approve, reject, notifications, audit logs)
 
 ---
 
@@ -39,13 +40,9 @@ _None — pick the next item from Upcoming._
 
 Moved to Completed. See `TransferService` and `tests/test_transfer_workflow.py`.
 
-### 2. Registration workflow
+### 2. Registration workflow — done
 
-- [ ] One active registration per player per season
-- [ ] Status transitions: pending → approved / rejected
-- [ ] Validation rules in service layer (not routes)
-- [ ] Notifications and audit logs on status change
-- [ ] Tests for registration business rules
+Moved to Completed. See `RegistrationService` and `tests/test_registration_workflow.py`.
 
 ### 3. File uploads (Supabase Storage)
 

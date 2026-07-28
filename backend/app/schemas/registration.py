@@ -8,15 +8,15 @@ from app.schemas.common import ListResponse, TimestampSchema
 
 
 class RegistrationCreate(BaseModel):
+    """Submit a registration. Status and timestamp are set by the server."""
+
     player_id: UUID
     club_id: UUID
     season_id: UUID
-    status: RegistrationStatus
-    registered_at: datetime
 
 
-class RegistrationUpdate(BaseModel):
-    status: RegistrationStatus | None = None
+class RegistrationAction(BaseModel):
+    remarks: str | None = None
 
 
 class RegistrationResponse(TimestampSchema):
