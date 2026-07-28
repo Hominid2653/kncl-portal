@@ -1,25 +1,67 @@
-from fastapi import APIRouter, Depends
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.endpoints.common import parse_filters
 from app.dependencies.auth import CurrentUser, require_federation_admin
 from app.dependencies.dependencies import get_db
-from app.schemas.transfer import TransferCreate, TransferListResponse, TransferResponse
+from app.schemas.transfer import (
+    TransferCreate,
+    TransferListResponse,
+    TransferResponse,
+    TransferUpdate,
+)
 from app.services.transfer_service import TransferService
 
 router = APIRouter(prefix='/transfers', tags=['Transfers'])
 service = TransferService()
 
 
-@router.get('/', response_model=TransferListResponse, summary='List transfers')
-async def list_transfers(db: AsyncSession = Depends(get_db)):
-    transfers = await service.list(db)
-    return {'items': transfers, 'total': len(transfers)}
+@router.get('/', response_model=TransferListResponse, summary='List Transfers')
+async def list_transfer(
+    db: AsyncSession = Depends(get_db),
+    page: int = Query(1, ge=1, description='Page number'),
+    page_size: int = Query(20, ge=1, le=100, description='Items per page'),
+    sort_by: str | None = Query(None, description='Field to sort by'),
+    sort_order: str = Query('asc', pattern='^(asc|desc)$', description='Sort direction'),
+    search: str | None = Query(None, description='Search term'),
+    filter: list[str] | None = Query(default=None, alias='filter', description='Filter as field=value'),
+):
+    filters = parse_filters(filter)
+    return await service.list(
+        db,
+        filters=filters,
+        search=search,
+        search_fields=['reason', 'status'],
+        sort_by=sort_by,
+        sort_order=sort_order,
+        page=page,
+        page_size=page_size,
+    )
 
 
-@router.post('/', response_model=TransferResponse, summary='Create transfer', status_code=201)
+@router.get('/{item_id}', response_model=TransferResponse, summary='Get Transfer by id')
+async def get_transfer(item_id: UUID, db: AsyncSession = Depends(get_db)):
+    return await service.get(db, item_id)
+
+
+@router.post('/', response_model=TransferResponse, summary='Create Transfer', status_code=201)
 async def create_transfer(
     payload: TransferCreate,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(require_federation_admin),
 ):
     return await service.create(db, payload)
+
+
+
+@router.patch('/{item_id}', response_model=TransferResponse, summary='Update Transfer')
+async def update_transfer(
+    item_id: UUID,
+    payload: TransferUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_federation_admin),
+):
+    payload_data = payload.model_dump(exclude_unset=True)
+    return await service.update(db, item_id, payload_data)
