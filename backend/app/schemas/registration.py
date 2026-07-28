@@ -1,4 +1,6 @@
 from datetime import datetime
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from app.models.enums import RegistrationStatus
@@ -6,21 +8,21 @@ from app.schemas.common import ListResponse, TimestampSchema
 
 
 class RegistrationCreate(BaseModel):
-    player_id: str
-    club_id: str
-    season_id: str
-    status: RegistrationStatus
-    registered_at: datetime
+    """Submit a registration. Status and timestamp are set by the server."""
+
+    player_id: UUID
+    club_id: UUID
+    season_id: UUID
 
 
-class RegistrationUpdate(BaseModel):
-    status: RegistrationStatus | None = None
+class RegistrationAction(BaseModel):
+    remarks: str | None = None
 
 
 class RegistrationResponse(TimestampSchema):
-    player_id: str
-    club_id: str
-    season_id: str
+    player_id: UUID
+    club_id: UUID
+    season_id: UUID
     status: RegistrationStatus
     registered_at: datetime
 

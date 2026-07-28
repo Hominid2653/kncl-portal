@@ -4,23 +4,30 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.common import parse_filters
-from app.dependencies.auth import CurrentUser, require_federation_admin
+from app.dependencies.auth import (
+    CurrentUser,
+    require_authenticated,
+    require_federation_admin
+)
 from app.dependencies.dependencies import get_db
 from app.schemas.season import (
     SeasonCreate,
     SeasonListResponse,
     SeasonResponse,
-    SeasonUpdate,
+    SeasonUpdate
 )
+from app.services.authorization_service import AuthorizationService
 from app.services.season_service import SeasonService
 
 router = APIRouter(prefix='/seasons', tags=['Seasons'])
 service = SeasonService()
+authz = AuthorizationService()
 
 
 @router.get('/', response_model=SeasonListResponse, summary='List Seasons')
 async def list_season(
     db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
     page: int = Query(1, ge=1, description='Page number'),
     page_size: int = Query(20, ge=1, le=100, description='Items per page'),
     sort_by: str | None = Query(None, description='Field to sort by'),
@@ -42,8 +49,13 @@ async def list_season(
 
 
 @router.get('/{item_id}', response_model=SeasonResponse, summary='Get Season by id')
-async def get_season(item_id: UUID, db: AsyncSession = Depends(get_db)):
-    return await service.get(db, item_id)
+async def get_season(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    item = await service.get(db, item_id)
+    return item
 
 
 @router.post('/', response_model=SeasonResponse, summary='Create Season', status_code=201)
@@ -55,7 +67,6 @@ async def create_season(
     return await service.create(db, payload)
 
 
-
 @router.patch('/{item_id}', response_model=SeasonResponse, summary='Update Season')
 async def update_season(
     item_id: UUID,
@@ -65,7 +76,6 @@ async def update_season(
 ):
     payload_data = payload.model_dump(exclude_unset=True)
     return await service.update(db, item_id, payload_data)
-
 
 
 @router.delete('/{item_id}', status_code=204, summary='Delete Season')

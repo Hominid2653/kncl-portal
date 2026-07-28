@@ -4,23 +4,30 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.common import parse_filters
-from app.dependencies.auth import CurrentUser, require_federation_admin
+from app.dependencies.auth import (
+    CurrentUser,
+    require_authenticated,
+    require_federation_admin
+)
 from app.dependencies.dependencies import get_db
 from app.schemas.league import (
     LeagueCreate,
     LeagueListResponse,
     LeagueResponse,
-    LeagueUpdate,
+    LeagueUpdate
 )
+from app.services.authorization_service import AuthorizationService
 from app.services.league_services import LeagueService
 
 router = APIRouter(prefix='/leagues', tags=['Leagues'])
 service = LeagueService()
+authz = AuthorizationService()
 
 
 @router.get('/', response_model=LeagueListResponse, summary='List Leagues')
 async def list_league(
     db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
     page: int = Query(1, ge=1, description='Page number'),
     page_size: int = Query(20, ge=1, le=100, description='Items per page'),
     sort_by: str | None = Query(None, description='Field to sort by'),
@@ -42,8 +49,13 @@ async def list_league(
 
 
 @router.get('/{item_id}', response_model=LeagueResponse, summary='Get League by id')
-async def get_league(item_id: UUID, db: AsyncSession = Depends(get_db)):
-    return await service.get(db, item_id)
+async def get_league(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    item = await service.get(db, item_id)
+    return item
 
 
 @router.post('/', response_model=LeagueResponse, summary='Create League', status_code=201)
@@ -55,7 +67,6 @@ async def create_league(
     return await service.create(db, payload)
 
 
-
 @router.patch('/{item_id}', response_model=LeagueResponse, summary='Update League')
 async def update_league(
     item_id: UUID,
@@ -65,7 +76,6 @@ async def update_league(
 ):
     payload_data = payload.model_dump(exclude_unset=True)
     return await service.update(db, item_id, payload_data)
-
 
 
 @router.delete('/{item_id}', status_code=204, summary='Delete League')

@@ -27,10 +27,16 @@ class BaseRepository(Generic[ModelType]):
     ):
         if filters:
             for field, value in filters.items():
-                if value is None:
+                if value is None or field.startswith("_"):
                     continue
-                if hasattr(self.model, field):
-                    query = query.where(getattr(self.model, field) == value)
+                if not hasattr(self.model, field):
+                    continue
+                column = getattr(self.model, field)
+                if isinstance(value, list):
+                    if value:
+                        query = query.where(column.in_(value))
+                else:
+                    query = query.where(column == value)
 
         if search and search_fields:
             conditions = [

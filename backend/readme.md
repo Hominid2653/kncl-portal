@@ -200,6 +200,86 @@ http://localhost:8000/redoc
 
 ---
 
+## Database Seeding
+
+Populate the database with KNCL reference data (league, clubs, players, registrations, transfers, etc.).
+
+From the `backend/` directory:
+
+```bash
+# Seed only if empty
+python -m app.seed.run
+
+# Clear seed tables and reseed
+python -m app.seed.run --reset
+```
+
+Seed data uses fixed UUIDs so IDs stay consistent across environments. See `app/seed/data.py` for reference IDs.
+
+---
+
+## Authentication
+
+The API accepts Supabase access tokens via:
+
+```
+Authorization: Bearer <supabase_access_token>
+```
+
+The backend verifies the JWT using `SUPABASE_JWT_SECRET`, reads the `sub` claim as the Supabase auth user ID, and loads the matching `user_profiles` row for application role and permissions.
+
+Add to `.env`:
+
+```
+SUPABASE_JWT_SECRET=your_supabase_jwt_secret
+```
+
+In development/test, mock headers remain available when `AUTH_MOCK_ENABLED=true`:
+
+```
+X-Mock-Role: FEDERATION_ADMIN
+X-Mock-User-ID: <user_profiles.id>
+X-Mock-Email: admin@kncl.local
+```
+
+Run tests:
+
+```bash
+pytest tests/ -q
+```
+
+Automated auth smoke test (server must be running):
+
+```bash
+# Uses seeded user + locally generated JWT
+python -m app.auth.check
+
+# Uses mock headers instead of JWT
+python -m app.auth.check --mock
+
+# Uses a real Supabase login
+python -m app.auth.check --email you@example.com --password your-password
+```
+
+---
+
+## Authorization
+
+Role-based access control is enforced on every endpoint via `AuthorizationService`.
+
+| Role | Capabilities |
+|------|--------------|
+| `FEDERATION_ADMIN` | Full access; creates leagues, seasons, clubs, audit logs |
+| `LEAGUE_COORDINATOR` | Read all scoped resources; manage registrations, transfers, approvals |
+| `CLUB_ADMIN` | Manage own club(s), members, registrations, transfers, documents |
+| `PLAYER` | Read/update own profile, player record, notifications |
+
+List endpoints automatically scope results by role. Single-resource GET endpoints call `ensure_can_read_*` checks after fetch.
+
+Authorization tests: `pytest tests/test_authorization.py -q`
+
+---
+
 ## Coding Standards
 
 - Use Pydantic schemas
