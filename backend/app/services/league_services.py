@@ -1,5 +1,4 @@
-from fastapi import HTTPException, status
-
+from app.core.exceptions import DuplicateResource, ResourceNotFound
 from app.models.league import League
 from app.repositories.league_repository import LeagueRepository
 from app.schemas.league import LeagueCreate
@@ -20,10 +19,7 @@ class LeagueService:
         )
 
         if existing:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="League already exists.",
-            )
+            raise DuplicateResource("League already exists.")
 
         league = League(**data.model_dump())
 
@@ -42,9 +38,6 @@ class LeagueService:
         )
 
         if not league:
-            raise HTTPException(
-                status_code=404,
-                detail="League not found.",
-            )
+            raise ResourceNotFound("League not found.")
 
         return league
