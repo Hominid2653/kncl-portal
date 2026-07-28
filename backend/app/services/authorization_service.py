@@ -243,6 +243,21 @@ class AuthorizationService:
         if result.scalar_one_or_none() is None:
             raise Forbidden("You do not have permission to access this player.")
 
+    async def ensure_can_manage_player_external_account(
+        self,
+        db: AsyncSession,
+        user: CurrentUser,
+        player: Player,
+    ) -> None:
+        if user.role is UserRole.PLAYER and player.user_profile_id == user.id:
+            return
+        await self.ensure_can_read_player_with_clubs(db, user, player)
+
+    def ensure_can_admin_verify_external_account(self, user: CurrentUser) -> None:
+        if self.is_club_leadership(user):
+            return
+        raise Forbidden("Only club leadership can perform admin account verification.")
+
     async def ensure_can_read_club(self, db: AsyncSession, user: CurrentUser, club: Club) -> None:
         if self.is_league_leadership(user):
             return

@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     max_upload_size_bytes: int = 10 * 1024 * 1024
 
     lichess_base_url: str = "https://lichess.org"
+    chesscom_base_url: str = "https://api.chess.com"
+    external_api_cache_ttl_seconds: int = 600
+    external_api_rate_limit_requests: int = 30
+    external_api_rate_limit_window_seconds: int = 60
 
     secret_key: str
 
