@@ -25,13 +25,13 @@ class Transfer(BaseModel):
 
     from_club_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("clubs.id", ondelete="CASCADE"),
+        ForeignKey("clubs.id", ondelete="RESTRICT"),
         nullable=False,
     )
 
     to_club_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("clubs.id", ondelete="CASCADE"),
+        ForeignKey("clubs.id", ondelete="RESTRICT"),
         nullable=False,
     )
 
