@@ -15,6 +15,9 @@ class BaseRepository(Generic[ModelType]):
         result = await db.execute(select(self.model).where(self.model.id == obj_id))
         return result.scalar_one_or_none()
 
+    async def exists(self, db: AsyncSession, obj_id: UUID) -> bool:
+        return await self.get_by_id(db, obj_id) is not None
+
     def _apply_query_options(
         self,
         query,

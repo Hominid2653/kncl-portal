@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from app.schemas.common import TimestampSchema
+from app.schemas.common import ListResponse, TimestampSchema
 
 
 class LeagueCreate(BaseModel):
@@ -18,6 +18,5 @@ class LeagueResponse(TimestampSchema):
     description: str | None = None
 
 
-class LeagueListResponse(BaseModel):
+class LeagueListResponse(ListResponse):
     items: list[LeagueResponse]
-    total: int
