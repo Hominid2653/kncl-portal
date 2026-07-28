@@ -20,11 +20,17 @@ Last updated: 2026-07-28
 - [x] Supabase JWT authentication (Bearer token + dev mock headers)
 - [x] Role-based authorization on all endpoints
 - [x] List scoping and per-resource access checks (`AuthorizationService`)
-- [x] Integration and authorization test suite (82+ tests passing)
+- [x] Integration and authorization test suite (94+ tests passing)
 - [x] API documentation (`docs/endpoints.md`)
 - [x] Auth smoke test (`python -m app.auth.check`)
 - [x] Transfer workflow (submit, approve, reject, cancel, notifications, audit logs)
 - [x] Registration workflow (submit, approve, reject, notifications, audit logs)
+- [x] File uploads via Supabase Storage (`POST /documents/upload`, signed download URLs)
+- [x] Dashboard APIs (`/dashboard/admin`, `/dashboard/club`, `/dashboard/player`)
+- [x] Real Supabase JWT verification (HS256 legacy + JWKS ES256/RS256)
+- [x] Lichess integration (verify username, fetch profile/ratings, sync player ratings)
+- [x] Chess.com integration (verify username, fetch profile/ratings, sync player ratings)
+- [x] External account verification (`lichess_verified`, `chesscom_verified`, bio/name/admin flows)
 
 ---
 
@@ -44,44 +50,21 @@ Moved to Completed. See `TransferService` and `tests/test_transfer_workflow.py`.
 
 Moved to Completed. See `RegistrationService` and `tests/test_registration_workflow.py`.
 
-### 3. File uploads (Supabase Storage)
+### 3. File uploads — done
 
-`documents` currently store URLs only.
+Moved to Completed. See `StorageService`, `DocumentService`, and `tests/test_document_upload.py`.
 
-- [ ] Upload flow (signed URL or direct upload to Supabase Storage)
-- [ ] Link files to transfers / registrations
-- [ ] File type and size validation
-- [ ] Access scoped through existing document authorization
-- [ ] Tests for upload and access control
+### 4. Real Supabase JWT verification — done
 
-### 4. Real Supabase JWT verification (if needed)
+Supports legacy HS256 (`SUPABASE_JWT_SECRET`) and newer ECC/RSA tokens via JWKS (`SUPABASE_URL`). See `app/core/security.py`, `app/core/supabase_jwks.py`, and `tests/test_jwt_verification.py`.
 
-Backend currently uses legacy HS256 `SUPABASE_JWT_SECRET`. Newer Supabase projects may use ECC (P-256).
+### 5. Dashboard / analytics APIs — done
 
-- [ ] Confirm real Supabase login tokens work with current setup
-- [ ] If not: add JWKS / ECC token verification support
-- [ ] Update `.env.example` and readme with correct secret/key guidance
-- [ ] Tests for both token types (if applicable)
+Moved to Completed. See `DashboardService` and `tests/test_dashboard.py`.
 
-### 5. Dashboard / analytics APIs
+### 6. External integrations — done
 
-Mentioned in readme (`/dashboard`) but not implemented.
-
-- [ ] Transfer counts by status
-- [ ] Pending approvals per club
-- [ ] Registrations per season
-- [ ] Recent activity feed
-- [ ] Role-scoped dashboard data
-- [ ] Tests and docs update
-
-### 6. External integrations
-
-Chess.com and Lichess (lower priority than workflows).
-
-- [ ] Chess.com: verify username, fetch rating/profile
-- [ ] Lichess: verify username, fetch rating/profile
-- [ ] Optional: sync ratings into player record on profile update
-- [ ] Tests with mocked external API responses
+Chess.com and Lichess integrations with verification, rating sync, caching, and rate limiting. See `tests/test_lichess_integration.py` and `tests/test_external_account_helpers.py`.
 
 ### 7. Frontend handoff
 
