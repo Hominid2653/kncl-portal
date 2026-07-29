@@ -1,0 +1,11 @@
+.app-shell {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.panel-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
