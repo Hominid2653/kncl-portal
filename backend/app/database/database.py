@@ -12,6 +12,8 @@ engine = create_engine(
     normalize_sync_database_url(settings.database_url),
     echo=settings.app_env.lower() in {"development", "test", "testing"},
     future=True,
+    pool_pre_ping=True,
+    pool_recycle=300,
 )
 
 SessionLocal = sessionmaker(
@@ -24,6 +26,8 @@ async_engine = create_async_engine(
     normalize_async_database_url(settings.database_url),
     echo=settings.app_env.lower() in {"development", "test", "testing"},
     future=True,
+    pool_pre_ping=True,
+    pool_recycle=300,
 )
 
 AsyncSessionLocal = async_sessionmaker(

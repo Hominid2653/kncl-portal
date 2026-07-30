@@ -38,6 +38,10 @@ class DashboardTotals(BaseModel):
     registrations: int
     transfers: int
     unread_notifications: int
+    pending_club_applications: int = 0
+    pending_player_applications: int = 0
+    pending_engagements: int = 0
+    pending_headshots: int = 0
 
 
 class AdminDashboardResponse(BaseModel):
@@ -53,6 +57,7 @@ class ClubDashboardClubSummary(BaseModel):
     club_name: str
     pending_transfers: int
     pending_registrations: int
+    pending_engagements: int = 0
     transfer_counts: list[StatusCount]
 
 

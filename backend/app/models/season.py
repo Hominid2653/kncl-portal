@@ -34,7 +34,7 @@ class Season(BaseModel):
         nullable=False,
     )
 
-    registration_open: Mapped[bool] = mapped_column(
+    roster_enrollment_open: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False,

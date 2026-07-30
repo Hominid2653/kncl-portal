@@ -7,7 +7,8 @@ from app.api.v1.endpoints.common import parse_filters
 from app.dependencies.auth import (
     CurrentUser,
     require_authenticated,
-    require_federation_admin
+    require_federation_admin,
+    require_league_leadership,
 )
 from app.dependencies.dependencies import get_db
 from app.schemas.season import (
@@ -72,10 +73,10 @@ async def update_season(
     item_id: UUID,
     payload: SeasonUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_federation_admin),
+    current_user: CurrentUser = Depends(require_league_leadership),
 ):
     payload_data = payload.model_dump(exclude_unset=True)
-    return await service.update(db, item_id, payload_data)
+    return await service.update_season(db, item_id, payload_data, current_user)
 
 
 @router.delete('/{item_id}', status_code=204, summary='Delete Season')

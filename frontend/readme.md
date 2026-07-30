@@ -1,161 +1,75 @@
-# KNCL Transfer Portal Frontend
+# React + TypeScript + Vite
 
-## Overview
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Authentication is handled by Supabase Auth.
+Currently, two official plugins are available:
 
-The frontend communicates with the FastAPI backend through secured JWT requests.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-Users never interact directly with the database.
+## React Compiler
 
----
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Technologies
+## Expanding the ESLint configuration
 
-- React
-- React Router
-- Axios
-- Tailwind CSS
-- JavaScript
-- Vite
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
----
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-## Folder Structure
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-src/
-│
-├── assets/
-├── components/
-├── pages/
-├── layouts/
-├── hooks/
-├── services/
-├── context/
-├── utils/
-├── routes/
-└── App.jsx
-
----
-
-## Responsibilities
-
-The frontend team is responsible for:
-
-- User Authentication UI
-- Landing Page
-- Player Dashboard
-- Club Dashboard
-- League Dashboard
-- Registration Forms
-- Transfer Request Pages
-- Notifications
-- Analytics Dashboard
-- Responsive Design
-
----
-
-## API Communication
-
-All API requests should be placed inside:
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 
 ```
-src/services/
-```
 
-Example:
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-```
-authService.js
-playerService.js
-transferService.js
-clubService.js
-```
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
----
-
-## Pages to Build
-
-### Public
-
-- Home
-- Login
-- Register
-- Forgot Password
-
-### Player
-
-- Dashboard
-- Profile
-- Register to Club
-- Submit Transfer
-- Transfer History
-
-### Club Admin
-
-- Dashboard
-- Players
-- Transfers
-- Approvals
-
-### League Admin
-
-- Dashboard
-- Clubs
-- Players
-- Reports
-
-### Federation Admin
-
-- Manage Users
-- Manage Clubs
-- League Settings
-- Analytics
-
----
-
-## Installation
-
-```bash
-npm install
-npm run dev
-```
-
----
-
-## Coding Standards
-
-- Functional Components only
-- Use React Hooks
-- Use Axios for API calls
-- Keep components reusable
-- Keep pages separate from components
-- Use meaningful file names
-
----
-
-## Git Workflow
-
-Create feature branches.
-
-Example:
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 
 ```
-frontend/login
-frontend/dashboard
-frontend/player-profile
-```
-
-Never push directly to main.
-
----
-
-## Team Members
-
-Frontend Lead
-
-- Edwin
-
-Frontend Developer
-
-- Hashim

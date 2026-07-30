@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     supabase_url: str
     supabase_anon_key: str = Field(
-        validation_alias=AliasChoices("SUPABASE_ANON_KEY", "SUPABASE_KEY"),
+        validation_alias=AliasChoices("supabase_anon_key", "SUPABASE_ANON_KEY", "SUPABASE_KEY"),
     )
     supabase_service_role_key: str
     supabase_jwt_secret: str = ""
@@ -45,11 +45,28 @@ class Settings(BaseSettings):
 
     secret_key: str
 
+    frontend_url: str = "http://localhost:5173"
+
+    resend_api_key: str = ""
+    resend_from_email: str = "KNCL Portal <noreply@kncl.local>"
+    otp_expiry_minutes: int = 10
+    otp_max_attempts: int = 5
+    email_verification_jwt_secret: str = ""
+    email_verification_jwt_expiry_seconds: int = 900
+    otp_rate_limit_per_email: int = 3
+    otp_rate_limit_email_window_seconds: int = 900
+    otp_rate_limit_per_ip: int = 10
+    otp_rate_limit_ip_window_seconds: int = 3600
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,
         extra="ignore",
     )
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 @lru_cache

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
 from app.models.enums import UserRole
+from app.models.types import UUIDList
 
 
 class UserProfile(BaseModel):
@@ -22,6 +23,11 @@ class UserProfile(BaseModel):
     phone: Mapped[str | None] = mapped_column(String(20))
 
     role: Mapped[UserRole] = mapped_column(Enum(UserRole))
+
+    coordinator_league_ids: Mapped[list[UUID] | None] = mapped_column(
+        UUIDList(),
+        nullable=True,
+    )
 
     player = relationship("Player", back_populates="user_profile", uselist=False)
 

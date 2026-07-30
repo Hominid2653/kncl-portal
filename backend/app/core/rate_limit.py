@@ -23,6 +23,16 @@ class InMemoryRateLimiter:
             self._hits[key] = hits
 
 
+otp_email_limiter = InMemoryRateLimiter(
+    max_requests=settings.otp_rate_limit_per_email,
+    window_seconds=settings.otp_rate_limit_email_window_seconds,
+)
+
+otp_ip_limiter = InMemoryRateLimiter(
+    max_requests=settings.otp_rate_limit_per_ip,
+    window_seconds=settings.otp_rate_limit_ip_window_seconds,
+)
+
 external_lookup_limiter = InMemoryRateLimiter(
     max_requests=settings.external_api_rate_limit_requests,
     window_seconds=settings.external_api_rate_limit_window_seconds,

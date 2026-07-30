@@ -6,11 +6,11 @@ from fastapi.testclient import TestClient
 from app.core.exceptions import Forbidden, ValidationError
 from app.dependencies.auth import (
     CurrentUser,
-    get_current_user,
     require_club_admin,
     require_club_leadership,
     require_federation_admin,
     require_league_leadership,
+    resolve_current_user,
 )
 from app.models.enums import UserRole
 
@@ -20,12 +20,9 @@ def test_get_current_user_returns_a_mock_user_with_the_requested_role() -> None:
         from app.database.database import AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
-            return await get_current_user(
-                authorization=None,
+            return await resolve_current_user(
+                db,
                 mock_role="club_admin",
-                mock_user_id=None,
-                mock_email=None,
-                db=db,
             )
 
     user = asyncio.run(_run())
@@ -81,12 +78,9 @@ def test_mock_role_must_be_valid() -> None:
         from app.database.database import AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
-            return await get_current_user(
-                authorization=None,
+            return await resolve_current_user(
+                db,
                 mock_role="owner",
-                mock_user_id=None,
-                mock_email=None,
-                db=db,
             )
 
     with pytest.raises(ValidationError):

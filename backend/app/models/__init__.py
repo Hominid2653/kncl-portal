@@ -1,5 +1,8 @@
 from app.models.base import Base, BaseModel
 
+from app.models.email_verification import EmailVerification
+from app.models.club_captain_application import ClubCaptainApplication
+from app.models.player_profile_application import PlayerProfileApplication
 from app.models.league import League
 from app.models.user_profile import UserProfile
 from app.models.player import Player
@@ -11,6 +14,7 @@ from app.models.transfer import Transfer
 from app.models.transfer_approval import TransferApproval
 from app.models.document import Document
 from app.models.notification import Notification
+from app.models.player_engagement import PlayerEngagement
 from app.models.audit_log import AuditLog
 
 __all__ = [
@@ -28,4 +32,7 @@ __all__ = [
     "Document",
     "Notification",
     "AuditLog",
+    "EmailVerification",
+    "ClubCaptainApplication",
+    "PlayerProfileApplication",
 ]

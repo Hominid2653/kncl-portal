@@ -10,7 +10,7 @@ class SeasonCreate(BaseModel):
     league_id: UUID
     name: str = Field(..., min_length=3, max_length=100)
     year: int
-    registration_open: bool = False
+    roster_enrollment_open: bool = False
     transfers_open: bool = False
     start_date: date | None = None
     end_date: date | None = None
@@ -18,7 +18,7 @@ class SeasonCreate(BaseModel):
 
 class SeasonUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=3, max_length=100)
-    registration_open: bool | None = None
+    roster_enrollment_open: bool | None = None
     transfers_open: bool | None = None
     start_date: date | None = None
     end_date: date | None = None
@@ -28,7 +28,7 @@ class SeasonResponse(TimestampSchema):
     league_id: UUID
     name: str
     year: int
-    registration_open: bool
+    roster_enrollment_open: bool
     transfers_open: bool
     start_date: date | None = None
     end_date: date | None = None

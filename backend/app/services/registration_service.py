@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import DuplicateResource, ResourceNotFound, ValidationError
 from app.dependencies.auth import CurrentUser
+from app.lib.business_rules import assert_roster_enrollment_window, increment_club_roster_count
 from app.models.audit_log import AuditLog
 from app.models.enums import RegistrationStatus
 from app.models.notification import Notification
@@ -127,6 +128,9 @@ class RegistrationService(BaseService[Registration]):
         registration.status = new_status
         db.add(registration)
 
+        if new_status is RegistrationStatus.APPROVED:
+            await increment_club_roster_count(db, registration.club_id)
+
         player = await self.player_repository.get_by_id(db, registration.player_id)
         if player:
             await self._create_notification(
@@ -158,12 +162,16 @@ class RegistrationService(BaseService[Registration]):
         season = await self.season_repository.get_by_id(db, data.season_id)
         if not season:
             raise ResourceNotFound("Season not found.")
-        if not season.registration_open:
-            raise ValidationError("Registration is closed for this season.")
+
+        await assert_roster_enrollment_window(
+            db,
+            season_id=data.season_id,
+            club_id=data.club_id,
+        )
 
     def _ensure_pending(self, registration: Registration, action: str) -> None:
         if registration.status is not RegistrationStatus.PENDING:
-            raise ValidationError(f"Only pending registrations can be {action}.")
+            raise DuplicateResource(f"Only pending registrations can be {action}.")
 
     async def _create_notification(
         self,

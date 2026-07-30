@@ -34,21 +34,11 @@ def _print_results(results: list[CheckResult]) -> int:
 
 
 def _supabase_login(email: str, password: str) -> str:
-    response = httpx.post(
-        f"{settings.supabase_url.rstrip('/')}/auth/v1/token",
-        params={"grant_type": "password"},
-        headers={
-            "apikey": settings.supabase_anon_key,
-            "Content-Type": "application/json",
-        },
-        json={"email": email, "password": password},
-        timeout=30,
-    )
-    response.raise_for_status()
-    token = response.json().get("access_token")
-    if not token:
-        raise RuntimeError("Supabase login succeeded but no access_token was returned.")
-    return token
+    import asyncio
+
+    from app.services.supabase_auth_service import SupabaseAuthService
+
+    return asyncio.run(SupabaseAuthService().login_with_password(email, password))
 
 
 def run_auth_checks(

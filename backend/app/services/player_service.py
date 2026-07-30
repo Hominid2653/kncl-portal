@@ -1,6 +1,9 @@
+from datetime import datetime, timezone
 from typing import Any
+from uuid import UUID
 
-from app.core.exceptions import DuplicateResource
+from app.core.exceptions import DuplicateResource, ValidationError
+from app.models.enums import HeadshotSource
 from app.models.player import Player
 from app.repositories.player_repository import PlayerRepository
 from app.schemas.player import PlayerCreate
@@ -48,6 +51,42 @@ class PlayerService(BaseService[Player]):
                 )
 
         return await super().update(db, obj_id, updates)
+
+    async def update_headshot(
+        self,
+        db,
+        player_id: UUID,
+        *,
+        headshot_url: str,
+        headshot_source: HeadshotSource,
+    ) -> Player:
+        return await self.update(
+            db,
+            player_id,
+            {
+                "headshot_url": headshot_url,
+                "headshot_source": headshot_source,
+                "headshot_updated_at": datetime.now(timezone.utc),
+                "headshot_moderation_status": "PENDING",
+            },
+            skip_external_validation=True,
+        )
+
+    async def moderate_headshot(
+        self,
+        db,
+        player_id: UUID,
+        *,
+        moderation_status: str,
+    ) -> Player:
+        if moderation_status not in {"APPROVED", "REJECTED", "PENDING"}:
+            raise ValidationError("Invalid moderation status.")
+        return await self.update(
+            db,
+            player_id,
+            {"headshot_moderation_status": moderation_status},
+            skip_external_validation=True,
+        )
 
     async def _apply_lichess_username_change(
         self,
