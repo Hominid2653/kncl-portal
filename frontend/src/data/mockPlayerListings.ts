@@ -141,6 +141,7 @@ export const initialEngagements: EngagementRequest[] = [
     requestingCaptainName: 'Peter Ochieng',
     recipientType: 'CLUB_CAPTAIN',
     recipientClubId: '22222222-2222-4222-8222-222222222202',
+    playerCc: true,
     message: 'Nairobi Kings would like to discuss a possible transfer for the upcoming season.',
     status: 'PENDING',
     createdAt: 'Jul 27, 16:40',

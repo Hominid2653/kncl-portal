@@ -8,9 +8,13 @@ interface SeasonContextValue {
   seasons: SeasonRecord[]
   getSeasonForLeague: (leagueId: string) => SeasonRecord | undefined
   isTransferWindowOpen: (leagueId: string) => boolean
+  isRosterEnrollmentOpen: (leagueId: string) => boolean
+  /** @deprecated Use isRosterEnrollmentOpen */
   isRegistrationWindowOpen: (leagueId: string) => boolean
   canModifyRoster: (leagueId: string, clubInInitialRosterPeriod: boolean) => boolean
   toggleTransfers: (seasonId: string, open: boolean) => void
+  toggleRosterEnrollment: (seasonId: string, open: boolean) => void
+  /** @deprecated Use toggleRosterEnrollment */
   toggleRegistration: (seasonId: string, open: boolean) => void
 }
 
@@ -28,16 +32,21 @@ export function SeasonProvider({ children }: { children: ReactNode }) {
       seasons,
       getSeasonForLeague: (leagueId) => latestSeasonForLeague(seasons, leagueId),
       isTransferWindowOpen: (leagueId) => latestSeasonForLeague(seasons, leagueId)?.transfersOpen ?? false,
-      isRegistrationWindowOpen: (leagueId) => latestSeasonForLeague(seasons, leagueId)?.registrationOpen ?? false,
+      isRosterEnrollmentOpen: (leagueId) => latestSeasonForLeague(seasons, leagueId)?.rosterEnrollmentOpen ?? false,
+      isRegistrationWindowOpen: (leagueId) => latestSeasonForLeague(seasons, leagueId)?.rosterEnrollmentOpen ?? false,
       canModifyRoster: (leagueId, clubInInitialRosterPeriod) =>
         clubInInitialRosterPeriod || (latestSeasonForLeague(seasons, leagueId)?.transfersOpen ?? false),
       toggleTransfers: (seasonId, open) => {
         setSeasons((prev) => prev.map((s) => (s.id === seasonId ? { ...s, transfersOpen: open } : s)))
         toast.success(open ? 'Transfer window opened for league (mock)' : 'Transfer window closed for league (mock)')
       },
+      toggleRosterEnrollment: (seasonId, open) => {
+        setSeasons((prev) => prev.map((s) => (s.id === seasonId ? { ...s, rosterEnrollmentOpen: open } : s)))
+        toast.success(open ? 'Roster enrollment opened for league (mock)' : 'Roster enrollment closed for league (mock)')
+      },
       toggleRegistration: (seasonId, open) => {
-        setSeasons((prev) => prev.map((s) => (s.id === seasonId ? { ...s, registrationOpen: open } : s)))
-        toast.success(open ? 'Registration window opened for league (mock)' : 'Registration window closed for league (mock)')
+        setSeasons((prev) => prev.map((s) => (s.id === seasonId ? { ...s, rosterEnrollmentOpen: open } : s)))
+        toast.success(open ? 'Roster enrollment opened for league (mock)' : 'Roster enrollment closed for league (mock)')
       },
     }),
     [seasons],

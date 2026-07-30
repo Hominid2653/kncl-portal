@@ -53,7 +53,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Sign in" description="Use the email from your approved application. Password email setup comes with Resend integration.">
+    <AuthLayout title="Sign in" description="Use the email from your approved application. Authentication is handled by Supabase Auth; welcome emails are sent from the backend via Resend.">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField control={form.control} name="email" render={({ field }) => (

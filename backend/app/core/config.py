@@ -26,6 +26,17 @@ class Settings(BaseSettings):
 
     secret_key: str
 
+    resend_api_key: str = ""
+    resend_from_email: str = "KNCL Portal <noreply@kncl.local>"
+    otp_expiry_minutes: int = 10
+    otp_max_attempts: int = 5
+    email_verification_jwt_secret: str = ""
+    email_verification_jwt_expiry_seconds: int = 900
+    otp_rate_limit_per_email: int = 3
+    otp_rate_limit_email_window_seconds: int = 900
+    otp_rate_limit_per_ip: int = 10
+    otp_rate_limit_ip_window_seconds: int = 3600
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,

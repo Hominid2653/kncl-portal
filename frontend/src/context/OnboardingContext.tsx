@@ -2,8 +2,11 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 import { toast } from 'sonner'
 
 import { useAuth } from '@/context/AuthContext'
+import { useOtp } from '@/context/OtpContext'
 import { usePlayerListings } from '@/context/PlayerListingsContext'
 import { filterByLeagueScope } from '@/lib/coordinator'
+import { isClubInInitialRosterPeriod as checkInitialPeriod } from '@/lib/business-rules'
+import { clubs } from '@/data/mockData'
 import { initialClubCaptainApplications, initialPlayerRegistrationApplications } from '@/data/mockOnboarding'
 import type { ApplicationStatus, ClubCaptainApplication, MockUser, PlayerRegistrationApplication } from '@/types'
 
@@ -44,8 +47,8 @@ interface OnboardingContextValue {
   clubApplications: ClubCaptainApplication[]
   playerApplications: PlayerRegistrationApplication[]
   initialRosterClubIds: string[]
-  submitClubApplication: (input: SubmitClubApplicationInput) => string
-  submitPlayerRegistration: (input: SubmitPlayerRegistrationInput) => string
+  submitClubApplication: (input: SubmitClubApplicationInput, emailVerificationToken: string) => string
+  submitPlayerRegistration: (input: SubmitPlayerRegistrationInput, emailVerificationToken: string) => string
   reviewClubApplication: (input: ReviewInput) => void
   reviewPlayerApplication: (input: ReviewInput) => void
   getClubApplicationByEmail: (email: string) => ClubCaptainApplication | undefined
@@ -54,6 +57,8 @@ interface OnboardingContextValue {
   getScopedPlayerApplications: (user: MockUser | null) => PlayerRegistrationApplication[]
   getScopedPendingCounts: (user: MockUser | null) => { club: number; player: number }
   isClubInInitialRosterPeriod: (clubId: string) => boolean
+  getClubRosterCount: (clubId: string) => number
+  recordRosterAddition: (clubId: string) => void
 }
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null)
@@ -84,10 +89,14 @@ function findLatestByEmail<T extends { email?: string; captainEmail?: string }>(
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { provisionUser } = useAuth()
+  const { consumeToken } = useOtp()
   const { addFreeAgentFromApplication } = usePlayerListings()
   const [clubApplications, setClubApplications] = useState(initialClubCaptainApplications)
   const [playerApplications, setPlayerApplications] = useState(initialPlayerRegistrationApplications)
   const [initialRosterClubIds, setInitialRosterClubIds] = useState<string[]>([])
+  const [clubRosterCounts, setClubRosterCounts] = useState<Record<string, number>>(() =>
+    Object.fromEntries(clubs.map((c) => [c.id, c.players])),
+  )
 
   const value = useMemo<OnboardingContextValue>(
     () => ({
@@ -106,24 +115,62 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           player: players.filter((a) => a.status === 'PENDING').length,
         }
       },
-      isClubInInitialRosterPeriod: (clubId) => initialRosterClubIds.includes(clubId),
-      submitClubApplication: (input) => {
+      isClubInInitialRosterPeriod: (clubId) =>
+        checkInitialPeriod(clubId, initialRosterClubIds, clubRosterCounts[clubId] ?? 0),
+      getClubRosterCount: (clubId) => clubRosterCounts[clubId] ?? 0,
+      recordRosterAddition: (clubId) => {
+        setClubRosterCounts((prev) => {
+          const next = (prev[clubId] ?? 0) + 1
+          return { ...prev, [clubId]: next }
+        })
+      },
+      submitClubApplication: (input, emailVerificationToken) => {
+        if (!consumeToken(input.captainEmail, emailVerificationToken, 'APPLICATION_SUBMIT')) {
+          toast.error('Email verification expired. Verify your email and try again.')
+          return ''
+        }
+
+        const pending = clubApplications.some(
+          (a) => a.captainEmail.toLowerCase() === input.captainEmail.toLowerCase() && a.status === 'PENDING',
+        )
+        if (pending) {
+          toast.error('A pending club application already exists for this email.')
+          return ''
+        }
+
+        const verifiedAt = timestamp()
         const application: ClubCaptainApplication = {
           id: `CCA-${Date.now()}`,
           ...input,
           status: 'PENDING',
-          submittedAt: timestamp(),
+          submittedAt: verifiedAt,
+          emailVerifiedAt: verifiedAt,
         }
         setClubApplications((prev) => [application, ...prev])
         toast.success('Application submitted. Track status with your email.')
         return application.id
       },
-      submitPlayerRegistration: (input) => {
+      submitPlayerRegistration: (input, emailVerificationToken) => {
+        if (!consumeToken(input.email, emailVerificationToken, 'APPLICATION_SUBMIT')) {
+          toast.error('Email verification expired. Verify your email and try again.')
+          return ''
+        }
+
+        const pending = playerApplications.some(
+          (a) => a.email.toLowerCase() === input.email.toLowerCase() && a.status === 'PENDING',
+        )
+        if (pending) {
+          toast.error('A pending player application already exists for this email.')
+          return ''
+        }
+
+        const verifiedAt = timestamp()
         const application: PlayerRegistrationApplication = {
           id: `PRA-${Date.now()}`,
           ...input,
           status: 'PENDING',
-          submittedAt: timestamp(),
+          submittedAt: verifiedAt,
+          emailVerifiedAt: verifiedAt,
         }
         setPlayerApplications((prev) => [application, ...prev])
         toast.success('Profile request submitted. Track status with your email.')
@@ -137,6 +184,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
         const target = clubApplications.find((item) => item.id === id)
         if (!target) return
+        if (target.status !== 'PENDING') {
+          toast.error('This application has already been reviewed.')
+          return
+        }
 
         const createdClubId = status === 'APPROVED' ? `22222222-2222-4222-8222-${Date.now().toString().slice(-12)}` : undefined
 
@@ -157,6 +208,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
         if (status === 'APPROVED' && createdClubId) {
           setInitialRosterClubIds((prev) => [...prev, createdClubId])
+          setClubRosterCounts((prev) => ({ ...prev, [createdClubId]: 0 }))
           provisionUser({
             id: `33333333-3333-4333-8333-${Date.now().toString().slice(-12)}`,
             email: target.captainEmail,
@@ -179,6 +231,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
         const target = playerApplications.find((item) => item.id === id)
         if (!target) return
+        if (target.status !== 'PENDING') {
+          toast.error('This application has already been reviewed.')
+          return
+        }
 
         const federationId = status === 'APPROVED' ? nextFederationId(playerApplications) : undefined
         let playerId: string | undefined
@@ -217,7 +273,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [clubApplications, playerApplications, initialRosterClubIds, addFreeAgentFromApplication, provisionUser],
+    [clubApplications, playerApplications, initialRosterClubIds, clubRosterCounts, addFreeAgentFromApplication, provisionUser, consumeToken],
   )
 
   return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>

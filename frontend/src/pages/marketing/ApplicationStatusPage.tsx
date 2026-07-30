@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { EmailOtpVerification } from '@/components/email-otp-verification'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -26,19 +27,44 @@ export default function ApplicationStatusPage() {
   const [activeTab, setActiveTab] = useState<'player' | 'club'>(
     searchParams.get('type') === 'club' ? 'club' : 'player',
   )
-  const [lookupEmail, setLookupEmail] = useState(searchParams.get('email') ?? '')
+  const [step, setStep] = useState<'email' | 'verify' | 'results'>('email')
+  const [pendingEmail, setPendingEmail] = useState('')
+  const [verifiedEmail, setVerifiedEmail] = useState('')
 
   const form = useForm<StatusForm>({
     resolver: zodResolver(schema),
     defaultValues: { email: searchParams.get('email') ?? '' },
   })
 
-  const playerApp = lookupEmail ? getPlayerApplicationByEmail(lookupEmail) : undefined
-  const clubApp = lookupEmail ? getClubApplicationByEmail(lookupEmail) : undefined
+  const playerApp = verifiedEmail ? getPlayerApplicationByEmail(verifiedEmail) : undefined
+  const clubApp = verifiedEmail ? getClubApplicationByEmail(verifiedEmail) : undefined
 
-  const onSubmit = (data: StatusForm) => {
-    setLookupEmail(data.email)
+  const onEmailSubmit = (data: StatusForm) => {
+    setPendingEmail(data.email)
+    setStep('verify')
   }
+
+  const onVerified = () => {
+    setVerifiedEmail(pendingEmail)
+    setStep('results')
+  }
+
+  const resetLookup = () => {
+    setStep('email')
+    setPendingEmail('')
+    setVerifiedEmail('')
+    form.reset({ email: '' })
+  }
+
+  useEffect(() => {
+    const email = searchParams.get('email')
+    if (email && searchParams.get('verified') === '1') {
+      setPendingEmail(email)
+      setVerifiedEmail(email)
+      setStep('results')
+      form.setValue('email', email)
+    }
+  }, [searchParams, form])
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-12 sm:px-6">
@@ -46,120 +72,153 @@ export default function ApplicationStatusPage() {
         <p className="text-[10px] font-semibold tracking-[0.35em] text-muted-foreground uppercase">Application tracker</p>
         <h1 className="text-3xl font-semibold tracking-tight">Check application status</h1>
         <p className="text-muted-foreground">
-          Enter the email you used when registering. Once approved, you can sign in with that email (password setup via email coming with Resend integration).
+          Verify your email to view application status. Once approved, sign in with that email via Supabase Auth (welcome email sent from the backend).
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Look up application</CardTitle>
-          <CardDescription>No account needed — use the same email from your submission.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 sm:flex-row">
-              <FormField control={form.control} name="email" render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Email</FormLabel>
-                  <FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <Button type="submit" className="sm:self-end">Check status</Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      {step === 'email' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Look up application</CardTitle>
+            <CardDescription>We&apos;ll send a verification code before showing your status.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onEmailSubmit)} className="flex flex-col gap-4 sm:flex-row">
+                <FormField control={form.control} name="email" render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Email</FormLabel>
+                    <FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <Button type="submit" className="sm:self-end">Send verification code</Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      )}
 
-      {lookupEmail && (
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'player' | 'club')}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="player">Player application</TabsTrigger>
-            <TabsTrigger value="club">Club application</TabsTrigger>
-          </TabsList>
+      {step === 'verify' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Verify your email</CardTitle>
+            <CardDescription>Enter the code sent to {pendingEmail}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <EmailOtpVerification
+              email={pendingEmail}
+              purpose="STATUS_LOOKUP"
+              autoSend
+              onVerified={onVerified}
+            />
+            <Button type="button" variant="ghost" onClick={() => setStep('email')}>
+              Use a different email
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
-          <TabsContent value="player">
-            {playerApp ? (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-2">
-                    <CardTitle>{playerApp.firstName} {playerApp.lastName}</CardTitle>
-                    <Badge variant={registrationStatusVariants[playerApp.status]}>
-                      {registrationStatusLabels[playerApp.status]}
-                    </Badge>
-                  </div>
-                  <CardDescription>{playerApp.leagueName} · Submitted {playerApp.submittedAt}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                  {playerApp.status === 'APPROVED' && (
-                    <Alert className="border-l-4 border-l-kenya-green">
-                      <AlertTitle>Approved — you can sign in</AlertTitle>
-                      <AlertDescription>
-                        Federation ID: <strong>{playerApp.federationId}</strong>. Use your email at the login page. Email password setup will be added when Resend is integrated.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {playerApp.status === 'REJECTED' && playerApp.rejectionReason && (
-                    <Alert variant="destructive">
-                      <AlertTitle>Application rejected</AlertTitle>
-                      <AlertDescription>{playerApp.rejectionReason}</AlertDescription>
-                    </Alert>
-                  )}
-                  {playerApp.status === 'PENDING' && (
-                    <Alert>
-                      <AlertTitle>Under review</AlertTitle>
-                      <AlertDescription>A league coordinator is reviewing your player profile. Check back later.</AlertDescription>
-                    </Alert>
-                  )}
-                  <Button render={<Link to="/login" state={{ email: playerApp.email }} />}>Go to sign in</Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <Alert><AlertDescription>No player application found for this email.</AlertDescription></Alert>
-            )}
-          </TabsContent>
+      {step === 'results' && verifiedEmail && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              Showing results for <strong>{verifiedEmail}</strong>
+            </p>
+            <Button type="button" variant="outline" size="sm" onClick={resetLookup}>
+              Look up another email
+            </Button>
+          </div>
 
-          <TabsContent value="club">
-            {clubApp ? (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-2">
-                    <CardTitle>{clubApp.clubName}</CardTitle>
-                    <Badge variant={registrationStatusVariants[clubApp.status]}>
-                      {registrationStatusLabels[clubApp.status]}
-                    </Badge>
-                  </div>
-                  <CardDescription>{clubApp.leagueName} · Captain: {clubApp.captainFirstName} {clubApp.captainLastName}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                  {clubApp.status === 'APPROVED' && (
-                    <Alert className="border-l-4 border-l-kenya-green">
-                      <AlertTitle>Approved — captain account ready</AlertTitle>
-                      <AlertDescription>
-                        Sign in with <strong>{clubApp.captainEmail}</strong>. Your club has an initial roster period to add free agents.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {clubApp.status === 'REJECTED' && clubApp.rejectionReason && (
-                    <Alert variant="destructive">
-                      <AlertTitle>Application rejected</AlertTitle>
-                      <AlertDescription>{clubApp.rejectionReason}</AlertDescription>
-                    </Alert>
-                  )}
-                  {clubApp.status === 'PENDING' && (
-                    <Alert>
-                      <AlertTitle>Under review</AlertTitle>
-                      <AlertDescription>A league coordinator is reviewing your club and captain details.</AlertDescription>
-                    </Alert>
-                  )}
-                  <Button render={<Link to="/login" state={{ email: clubApp.captainEmail }} />}>Go to sign in</Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <Alert><AlertDescription>No club application found for this email.</AlertDescription></Alert>
-            )}
-          </TabsContent>
-        </Tabs>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'player' | 'club')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="player">Player application</TabsTrigger>
+              <TabsTrigger value="club">Club application</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="player">
+              {playerApp ? (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-2">
+                      <CardTitle>{playerApp.firstName} {playerApp.lastName}</CardTitle>
+                      <Badge variant={registrationStatusVariants[playerApp.status]}>
+                        {registrationStatusLabels[playerApp.status]}
+                      </Badge>
+                    </div>
+                    <CardDescription>{playerApp.leagueName} · Submitted {playerApp.submittedAt}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-sm">
+                    {playerApp.status === 'APPROVED' && (
+                      <Alert className="border-l-4 border-l-kenya-green">
+                        <AlertTitle>Approved — you can sign in</AlertTitle>
+                        <AlertDescription>
+                          Federation ID: <strong>{playerApp.federationId}</strong>. Use your email at the login page. The backend sends a welcome email with sign-in instructions via Resend.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {playerApp.status === 'REJECTED' && playerApp.rejectionReason && (
+                      <Alert variant="destructive">
+                        <AlertTitle>Application rejected</AlertTitle>
+                        <AlertDescription>{playerApp.rejectionReason}</AlertDescription>
+                      </Alert>
+                    )}
+                    {playerApp.status === 'PENDING' && (
+                      <Alert>
+                        <AlertTitle>Under review</AlertTitle>
+                        <AlertDescription>A league coordinator is reviewing your player profile. Check back later.</AlertDescription>
+                      </Alert>
+                    )}
+                    <Button render={<Link to="/login" state={{ email: playerApp.email }} />}>Go to sign in</Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Alert><AlertDescription>No player application found for this email.</AlertDescription></Alert>
+              )}
+            </TabsContent>
+
+            <TabsContent value="club">
+              {clubApp ? (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-2">
+                      <CardTitle>{clubApp.clubName}</CardTitle>
+                      <Badge variant={registrationStatusVariants[clubApp.status]}>
+                        {registrationStatusLabels[clubApp.status]}
+                      </Badge>
+                    </div>
+                    <CardDescription>{clubApp.leagueName} · Captain: {clubApp.captainFirstName} {clubApp.captainLastName}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-sm">
+                    {clubApp.status === 'APPROVED' && (
+                      <Alert className="border-l-4 border-l-kenya-green">
+                        <AlertTitle>Approved — captain account ready</AlertTitle>
+                        <AlertDescription>
+                          Sign in with <strong>{clubApp.captainEmail}</strong>. Your club has an initial roster period to add free agents.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {clubApp.status === 'REJECTED' && clubApp.rejectionReason && (
+                      <Alert variant="destructive">
+                        <AlertTitle>Application rejected</AlertTitle>
+                        <AlertDescription>{clubApp.rejectionReason}</AlertDescription>
+                      </Alert>
+                    )}
+                    {clubApp.status === 'PENDING' && (
+                      <Alert>
+                        <AlertTitle>Under review</AlertTitle>
+                        <AlertDescription>A league coordinator is reviewing your club and captain details.</AlertDescription>
+                      </Alert>
+                    )}
+                    <Button render={<Link to="/login" state={{ email: clubApp.captainEmail }} />}>Go to sign in</Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Alert><AlertDescription>No club application found for this email.</AlertDescription></Alert>
+              )}
+            </TabsContent>
+          </Tabs>
+        </>
       )}
     </div>
   )

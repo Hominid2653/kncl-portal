@@ -4,6 +4,77 @@ This document describes backend changes required for the **player listings / eng
 
 ---
 
+## Business rules — canonical
+
+Use this section as the single source of truth. Frontend mock: `frontend/src/lib/business-rules.ts`.
+
+### Terminology (fix overloaded “registration”)
+
+| Term | Meaning | Backend table / endpoint |
+|------|---------|--------------------------|
+| **Player profile application** | New person onboarding into the federation | `player_profile_applications`, `POST /player-applications/` |
+| **Club captain application** | New club + captain onboarding | `club_captain_applications`, `POST /club-applications/` |
+| **Roster enrollment** | Player ↔ club ↔ season affiliation (first club or re-enrollment) | `registrations`, `POST /roster-enrollments/` |
+| **Transfer** | Inter-club move of a **committed** player | `transfers`, `POST /transfers/` |
+| **`roster_enrollment_open`** | Season flag gating **new roster enrollments** for free agents | `seasons.roster_enrollment_open` |
+| **`transfers_open`** | Season flag gating **inter-club transfers** and roster mutations (outside initial period) | `seasons.transfers_open` |
+
+**Always open (with email OTP):** player profile applications, club captain applications.  
+**Never confused with:** roster enrollment window — closing roster enrollment does **not** block new profile applications.
+
+### Free agent → first club (fix path ambiguity)
+
+```
+Engagement (anytime) → Player accepts → Captain initiates roster enrollment (window-gated)
+        → Coordinator approves enrollment → player COMMITTED on club roster
+```
+
+Free agents **never** use `transfers` for their first club. Use **roster enrollment** only.
+
+### Committed player → another club
+
+```
+Engagement (anytime) → Selling captain accepts (club-to-club terms)
+        → Player CC'd (personal terms, read-only) → Requesting captain initiates transfer (transfer window)
+        → OR player submits transfer request (personal terms) during open window
+        → Coordinator approves transfer
+```
+
+- **Club-to-club terms:** selling captain accepts engagement or negotiates with destination captain.
+- **Personal terms:** player may submit `POST /transfers/` with `source=PLAYER_REQUEST` when transfer window is open (one pending per player).
+- **Player CC on engagement:** notified, read-only — does not replace player-initiated requests.
+
+### Engagement window policy (pipeline)
+
+| Action | Window required? |
+|--------|------------------|
+| Express interest (`POST /engagements/`) | **No** — allowed anytime |
+| Initiate roster enrollment (free agent) | **Yes** — `roster_enrollment_open` AND (`transfers_open` OR initial roster period) |
+| Initiate transfer (committed) | **Yes** — `transfers_open` only |
+| Approve enrollment / transfer | Coordinator queue (existing workflow) |
+
+### Initial roster period
+
+- Granted when a **club captain application** is approved.
+- Allows roster enrollment while league transfer window may be closed.
+- **Ends automatically** when the club reaches **`MIN_ROSTER_SIZE` approved roster members** (default: 6).
+- Tracked via approved roster count, not calendar expiry.
+
+### Manual transfer entry
+
+- **Club captains:** engagement workflow only — no manual `POST /transfers/`.
+- **League coordinators / federation admins:** manual transfer entry for exceptions and data correction.
+
+### Enforcement (backend + mock)
+
+- One `PENDING` engagement per `(requesting_club_id, player_id)`.
+- One `PENDING` player/club application per email.
+- Player must be listable (approved profile) before engagement.
+- Review endpoints return `409` if application/enrollment already reviewed.
+- Idempotent status transitions on engagements.
+
+---
+
 ## Part 1 — Account onboarding & roster governance
 
 ### Role hierarchy
@@ -52,14 +123,14 @@ Captains **cannot** self-provision accounts. They submit a **club & captain appl
 }
 ```
 
-**On submit:** status = `PENDING`; notify assigned league coordinator(s).
+**On submit:** status = `PENDING`; require verified email (see Part 4); notify assigned league coordinator(s).
 
 **Coordinator review:** `PATCH /club-applications/{id}`
 
 | Action | Backend effect |
 |--------|----------------|
-| `APPROVED` | Create `clubs` row; create `users` row with role `CLUB_ADMIN`; link captain to club; send welcome/activation email |
-| `REJECTED` | Store reason; notify applicant |
+| `APPROVED` | Create `clubs` row; create Supabase auth user + `user_profiles` row with role `CLUB_ADMIN`; link captain to club; send welcome/activation email via Resend |
+| `REJECTED` | Store `rejection_reason`; notify applicant via Resend |
 
 Captain portal access is **blocked** until `APPROVED`.
 
@@ -91,10 +162,10 @@ Players create profiles **before** joining any club. Captains **must not** creat
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/player-applications/` | **Public** | Submit player profile request |
+| POST | `/player-applications/` | **Public** | Submit player profile request (requires email verification token) |
 | PATCH | `/player-applications/{id}` | Coordinator | Approve/reject |
 
-**On approve:** create `players` row with `commitment_status = FREE_AGENT`; create or link `users` row with role `PLAYER`; assign federation ID.
+**On approve:** create `players` row with `commitment_status = FREE_AGENT`; create Supabase auth user + `user_profiles` row with role `PLAYER`; assign federation ID; send welcome email via Resend.
 
 Approved players appear in `GET /players/listings?commitment_status=FREE_AGENT`.
 
@@ -133,6 +204,8 @@ Apply to: `POST /engagements/`, `POST /transfers/`, roster membership create/del
 | `captain_email` | string (unique among pending) |
 | `captain_phone` | string |
 | `status` | `PENDING` \| `APPROVED` \| `REJECTED` |
+| `rejection_reason` | text, nullable (required when `REJECTED`) |
+| `email_verified_at` | timestamp, nullable (set when OTP verified before submit) |
 | `reviewed_by` | FK users, nullable |
 | `reviewed_at` | timestamp, nullable |
 | `created_club_id` | FK clubs, nullable (set on approve) |
@@ -146,6 +219,8 @@ Apply to: `POST /engagements/`, `POST /transfers/`, roster membership create/del
 | `id` | UUID PK |
 | `first_name`, `last_name`, `email`, `county`, `nationality` | strings |
 | `status` | enum |
+| `rejection_reason` | text, nullable (required when `REJECTED`) |
+| `email_verified_at` | timestamp, nullable |
 | `created_player_id` | FK players, nullable |
 | `federation_id` | string, nullable (assigned on approve) |
 | `reviewed_by`, `reviewed_at` | nullable |
@@ -156,8 +231,10 @@ Apply to: `POST /engagements/`, `POST /transfers/`, roster membership create/del
 | Event | Recipient |
 |-------|-----------|
 | Club application submitted | League coordinator(s) for league |
-| Club application approved | Captain email |
-| Player application approved | Player email |
+| Club application approved | Captain email (Resend welcome + sign-in link) |
+| Club application rejected | Captain email (includes `rejection_reason`) |
+| Player application approved | Player email (Resend welcome + sign-in link) |
+| Player application rejected | Player email (includes `rejection_reason`) |
 | Transfer window opens/closes | All club captains (optional broadcast) |
 
 ### Audit events
@@ -171,10 +248,12 @@ Apply to: `POST /engagements/`, `POST /transfers/`, roster membership create/del
 
 | Frontend mock | Backend target |
 |---------------|----------------|
-| `/register/captain` | `POST /club-applications/` |
-| `/register/player` | `POST /player-applications/` |
+| `/register/captain` | `POST /auth/otp/*` then `POST /club-applications/` |
+| `/register/player` | `POST /auth/otp/*` then `POST /player-applications/` |
+| `/register/status` | `POST /auth/otp/*` then `GET /application-status` |
 | `AdminClubApplicationsPage` | `GET /club-applications/`, `PATCH /club-applications/{id}` |
 | `AdminUserProfilesPage` (create coordinator) | `POST /users/coordinators` |
+| `AuthContext.provisionUser()` (mock) | Supabase Admin API user create on application approve |
 | `ClubRosterPage` / `ClubPlayerNewPage` | `GET /players/listings?commitment_status=FREE_AGENT` + transfer window check |
 | `lib/season.isTransferWindowOpen()` | `GET /seasons/current` → `transfers_open` |
 
@@ -451,6 +530,18 @@ Include `player_id`, `requesting_club_id`, `recipient_club_id`, and actor user i
 - [ ] Thumbnail generation for listings grid
 - [ ] `PATCH /seasons/{id}` window toggles with audit log
 
+### Part 4 — Email, OTP & application status
+- [ ] Add `email_verifications` table (hashed OTP, purpose, expiry)
+- [ ] `EmailService` — Resend SDK; templates for OTP, welcome, rejection
+- [ ] `OtpService` — generate, verify, rate-limit; issue short-lived verification JWT
+- [ ] Router: `POST /auth/otp/request`, `POST /auth/otp/verify`
+- [ ] Router: `GET /application-status` (OTP-gated; player + club tabs)
+- [ ] Config: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `OTP_EXPIRY_MINUTES`
+- [ ] Require `email_verification_token` on public application submit endpoints
+- [ ] On approve: Supabase Admin API create user + Resend welcome email
+- [ ] Add `rejection_reason`, `email_verified_at` columns to application tables
+- [ ] Audit: `otp.sent`, `otp.verified`, `auth.user_provisioned`
+
 ---
 
 ## Frontend mapping (Phase 8)
@@ -529,6 +620,192 @@ On approve: player appears in `GET /players/listings?commitment_status=FREE_AGEN
 
 ---
 
+## Part 4 — Email, OTP & application status
+
+**Principle:** Resend and OTP are **backend-only**. The frontend never holds `RESEND_API_KEY` or generates/verifies OTPs. Login sessions remain **Supabase Auth** (JWT verified by FastAPI as today).
+
+### Responsibility split
+
+| Concern | Owner | Notes |
+|---------|-------|-------|
+| Login, password reset, session JWT | **Supabase Auth** | Configure Resend as Supabase SMTP (optional) for auth emails |
+| Application OTP (pre-submit, status lookup) | **FastAPI + Resend** | Custom `OtpService`; store hashed codes server-side |
+| Transactional emails (welcome, rejection, coordinator alerts) | **FastAPI + Resend** | `EmailService` with templates |
+| Application status API | **FastAPI** | OTP-gated; replaces mock email-only lookup |
+| User provisioning on approve | **FastAPI → Supabase Admin API** | Replaces frontend `AuthContext.provisionUser()` mock |
+| Confirmation dialogs | **Frontend only** | UX guard; backend returns idempotent errors on duplicate actions |
+
+### Architecture
+
+```
+React (forms, OTP input, confirm dialogs)
+        ↓
+FastAPI (OTP verify, applications, approve hooks)
+        ↓
+├── Postgres (applications, email_verifications, user_profiles)
+├── Resend (transactional email)
+└── Supabase Admin API (create auth user on approve)
+        ↓
+Supabase Auth (login JWT) → FastAPI (existing Bearer verification)
+```
+
+### Database: `email_verifications`
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID PK | |
+| `email` | string | Normalized lowercase |
+| `purpose` | enum | `APPLICATION_SUBMIT`, `STATUS_LOOKUP` |
+| `code_hash` | string | SHA-256 of OTP + server pepper |
+| `attempts` | int | Increment on failed verify; lock after 5 |
+| `expires_at` | timestamp | e.g. 10 minutes from issue |
+| `verified_at` | timestamp, nullable | |
+| `created_at` | timestamp | |
+
+Purge expired rows via scheduled job or TTL index.
+
+### OTP endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/auth/otp/request` | **Public** | Send OTP to email |
+| POST | `/auth/otp/verify` | **Public** | Verify code; return short-lived `email_verification_token` (JWT, ~15 min) |
+
+**POST `/auth/otp/request` body:**
+
+```json
+{
+  "email": "david@example.com",
+  "purpose": "APPLICATION_SUBMIT"
+}
+```
+
+`purpose` values: `APPLICATION_SUBMIT` | `STATUS_LOOKUP`
+
+**Rate limits:** max 3 requests per email per 15 min; max 10 per IP per hour (reuse `app/dependencies/rate_limit.py`).
+
+**POST `/auth/otp/verify` body:**
+
+```json
+{
+  "email": "david@example.com",
+  "code": "482913",
+  "purpose": "APPLICATION_SUBMIT"
+}
+```
+
+**Response:**
+
+```json
+{
+  "email_verification_token": "eyJ...",
+  "expires_in": 900
+}
+```
+
+### Application submit (updated)
+
+Public `POST /club-applications/` and `POST /player-applications/` require header or body field:
+
+```json
+{
+  "email_verification_token": "eyJ...",
+  "...": "application fields"
+}
+```
+
+Server validates token email matches application email, sets `email_verified_at`, then creates `PENDING` row.
+
+Reject submissions without valid verification (HTTP 403).
+
+### Application status lookup
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/application-status` | **Public** (OTP-gated) | Return club and/or player application for verified email |
+
+**Flow (matches frontend `/register/status`):**
+
+1. Client calls `POST /auth/otp/request` with `purpose: STATUS_LOOKUP`
+2. User enters code → `POST /auth/otp/verify`
+3. Client calls `GET /application-status` with `Authorization: Bearer <email_verification_token>`
+
+**Response:**
+
+```json
+{
+  "email": "david@example.com",
+  "club_application": {
+    "id": "uuid",
+    "club_name": "Eldoret Falcons",
+    "status": "PENDING",
+    "rejection_reason": null,
+    "submitted_at": "2026-07-28T10:00:00Z",
+    "reviewed_at": null
+  },
+  "player_application": null
+}
+```
+
+Omit sensitive internal fields (`reviewed_by` id ok for audit; no coordinator notes).
+
+### Auto-provision on approve (replaces frontend mock)
+
+When coordinator sets `status = APPROVED`:
+
+1. **Atomic transaction:** create domain rows (`clubs`, `players`, `user_profiles`)
+2. **Supabase Admin API** (`SUPABASE_SERVICE_ROLE_KEY`): `auth.admin.create_user` with `email_confirm: true` or send invite link
+3. **Resend:** welcome email with sign-in link (magic link via Supabase or password-set URL)
+4. **Audit:** `auth.user_provisioned` with `application_id`, `auth_user_id`, `role`
+
+Captain/player portal login uses **Supabase Auth** — not application-layer passwords.
+
+**Reject duplicate provision:** if auth user already exists for email, link to existing `user_profiles` row instead of failing.
+
+### Email templates (Resend)
+
+| Template | Trigger | Recipient |
+|----------|---------|-----------|
+| `otp-application` | OTP request (`APPLICATION_SUBMIT`) | Applicant |
+| `otp-status` | OTP request (`STATUS_LOOKUP`) | Applicant |
+| `application-received` | Application submitted | Applicant (confirmation) |
+| `application-approved-captain` | Club application approved | Captain |
+| `application-approved-player` | Player application approved | Player |
+| `application-rejected` | Application rejected | Applicant (includes `rejection_reason`) |
+| `coordinator-new-application` | Application submitted | League coordinator(s) |
+
+### Configuration
+
+Add to `backend/app/core/config.py` and `.env.example`:
+
+```
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=KNCL Portal <noreply@kncl.local>
+OTP_EXPIRY_MINUTES=10
+OTP_MAX_ATTEMPTS=5
+EMAIL_VERIFICATION_JWT_SECRET=  # or reuse SECRET_KEY with distinct claim
+```
+
+**Optional:** configure Resend as Supabase custom SMTP so Supabase-native magic links and password reset also use Resend.
+
+### Services (suggested files)
+
+```
+backend/app/services/email_service.py    # Resend SDK wrapper
+backend/app/services/otp_service.py      # generate, hash, verify, purge
+backend/app/services/provisioning_service.py  # Supabase Admin + domain rows
+backend/app/api/v1/endpoints/auth_otp.py
+backend/app/api/v1/endpoints/application_status.py
+```
+
+### Audit events (additions)
+
+- `otp.sent` / `otp.verified` / `otp.failed`
+- `auth.user_provisioned`
+- `application.status_viewed` (status lookup after OTP)
+
+---
+
 ## Implemented in frontend mock (Phase 1–7)
 
 | Feature | Mock implementation |
@@ -541,10 +818,19 @@ On approve: player appears in `GET /players/listings?commitment_status=FREE_AGEN
 | Charter on club application | Optional upload on `/register/captain` |
 | Player registration approval | `/admin/player-applications` — approve or **reject with required message** |
 | Club application rejection | Reject with required message on `/admin/club-applications` |
-| Application status page | `/register/status` — lookup by email; player/club tabs |
-| Auto-provision login | `AuthContext.provisionUser()` on approve; sign in with application email (password via Resend later) |
-| Confirmation dialogs | Approve/reject/transfer/window toggles use `ConfirmDialog` |
-| Mobile hamburger menu | `LandingLayout` sheet nav on `< md` breakpoints |
+| Application status page | `/register/status` — OTP-gated lookup; player/club tabs |
+| Email OTP (mock) | `OtpContext` + `api/auth-otp.ts` mirrors `POST /auth/otp/*`; dev code in toast |
+| Canonical business rules | `lib/business-rules.ts` + docs § Business rules — canonical |
+| Roster enrollment vs transfer split | Free agent → `RosterEnrollmentContext`; committed → `TransferContext` |
+| Pipeline engagement policy | Interest anytime; initiate enrollment/transfer window-gated |
+| Committed player CC | `playerCc` on engagements; player portal read-only CC section |
+| Initial roster period | Ends at `MIN_ROSTER_SIZE` (6) approved members |
+| Manual transfer entry | `/admin/transfers/new` coordinators/federation only |
+| Player transfer requests | `/player/transfers/new` — committed players, window-gated, one pending |
+| Enforcement guards | Duplicate pending apps/engagements; idempotent review; listable check |
+| Auto-provision login | `AuthContext.provisionUser()` mock → backend Supabase Admin on approve |
+| Confirmation dialogs | `ConfirmDialog` on approve/reject/transfer/window toggles (frontend UX only) |
+| Mobile hamburger menu | `LandingLayout` sheet nav on `< md` (frontend only; no API) |
 
 ---
 
@@ -552,14 +838,13 @@ On approve: player appears in `GET /players/listings?commitment_status=FREE_AGEN
 
 | Gap | Risk | Recommendation |
 |-----|------|----------------|
-| **No email verification on public registration** | Fake captain/player applications | Require email OTP via Resend before application enters coordinator queue |
-| **Password / welcome email not sent** | Approved users don't know how to sign in | Resend integration: welcome email + password-set link on approval |
-| **Status lookup by email only** | Anyone with email can check application status | Add application ID + email OTP for status lookup (Phase 8+) |
+| **OTP + Resend not implemented** | Fake applications; insecure status lookup | Implement Part 4 before production public registration |
 | **No duplicate prevention** | Same player applied twice | Unique index on `player_applications.email` while `PENDING` |
 | **Committed player photos** | Privacy expectations | Allow players to hide headshot when committed (config flag) |
 | **Audit trail for window toggles** | Disputes over roster eligibility | Log `season.transfers_open_changed` with actor + timestamp |
 | **Real-time notifications** | Users miss engagements | WebSocket or push for engagement/application events (Phase 9+) |
 | **Search/indexing for player grid** | Slow at scale | Elasticsearch or Postgres full-text on name, county, federation_id |
+| **Destructive actions without server idempotency** | Double-submit on slow networks | Return `409` on duplicate approve/reject; engagement status guards |
 
 ### Player application rejection (backend)
 
@@ -578,6 +863,14 @@ On approve: player appears in `GET /players/listings?commitment_status=FREE_AGEN
 
 | Frontend mock | Backend target |
 |---------------|----------------|
+| `ApplicationStatusPage` | `POST /auth/otp/*` + `GET /application-status` |
+| `EmailOtpVerification` component | `POST /auth/otp/request`, `POST /auth/otp/verify` |
+| `api/auth-otp.ts` (mock) | Replace `postOtpRequest` / `postOtpVerify` with FastAPI fetch in Phase 8 |
+| `CaptainRegistrationPage` / `PlayerRegistrationPage` OTP step | `POST /auth/otp/request`, `POST /auth/otp/verify` before submit |
+| `AuthContext.provisionUser()` | Supabase Admin API on `PATCH …/approve` |
+| `AuthContext.loginByEmail()` (mock) | Supabase Auth sign-in (frontend SDK) |
+| `ConfirmDialog` (approve/reject/transfer/window) | No API change; backend idempotent status transitions |
+| `LandingLayout` mobile menu | No API change |
 | `AdminPlayerApplicationsPage` | `GET/PATCH /player-applications/` with `rejection_reason` |
 | `AdminClubApplicationsPage` | `GET/PATCH /club-applications/` with `rejection_reason` |
 | `AdminHeadshotModerationPage` | `GET/PATCH /headshot-moderations/` |

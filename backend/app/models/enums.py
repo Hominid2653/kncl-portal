@@ -24,3 +24,32 @@ class TransferStatus(str, Enum):
 class ApprovalDecision(str, Enum):
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
+
+
+class ApplicationStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+class OtpPurpose(str, Enum):
+    APPLICATION_SUBMIT = "APPLICATION_SUBMIT"
+    STATUS_LOOKUP = "STATUS_LOOKUP"
+
+
+class TransferSource(str, Enum):
+    ENGAGEMENT = "ENGAGEMENT"
+    PLAYER_REQUEST = "PLAYER_REQUEST"
+    COORDINATOR_MANUAL = "COORDINATOR_MANUAL"
+
+
+class PlayerCommitmentStatus(str, Enum):
+    FREE_AGENT = "FREE_AGENT"
+    COMMITTED = "COMMITTED"
+
+
+class EngagementStatus(str, Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    DECLINED = "DECLINED"
+    WITHDRAWN = "WITHDRAWN"

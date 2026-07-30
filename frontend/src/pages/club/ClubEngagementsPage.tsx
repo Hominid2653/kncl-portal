@@ -52,13 +52,15 @@ function engagementColumns(
 
 export default function ClubEngagementsPage() {
   const { user } = useAuth()
-  const { getClubEngagements, getOutgoingEngagements, respondToEngagement, initiateTransferFromEngagement } = useEngagements()
-  const [transferTarget, setTransferTarget] = useState<EngagementRequest | null>(null)
+  const { getClubEngagements, getOutgoingEngagements, respondToEngagement, initiateMovementFromEngagement } = useEngagements()
+  const [movementTarget, setMovementTarget] = useState<EngagementRequest | null>(null)
   const [respondTarget, setRespondTarget] = useState<{ id: string; status: 'ACCEPTED' | 'DECLINED' } | null>(null)
 
   const incoming = user?.clubId ? getClubEngagements(user.clubId) : []
   const outgoing = user?.clubId ? getOutgoingEngagements(user.clubId) : []
   const pendingIncoming = incoming.filter((e) => e.status === 'PENDING').length
+
+  const movementLabel = movementTarget?.playerCommitmentStatus === 'FREE_AGENT' ? 'roster enrollment' : 'transfer'
 
   return (
     <PortalLayout portalLabel="Club portal">
@@ -66,14 +68,14 @@ export default function ClubEngagementsPage() {
         <div>
           <h1 className="text-2xl font-semibold">Engagements</h1>
           <p className="text-sm text-muted-foreground">
-            Manage incoming interest about your players and initiate transfers from accepted outgoing requests.
+            Express interest anytime. Initiate roster enrollment (free agents) or transfer (committed players) when windows allow.
           </p>
         </div>
 
         {pendingIncoming > 0 && (
           <Alert className="border-l-4 border-l-kenya-green">
-            <AlertTitle>{pendingIncoming} incoming request{pendingIncoming > 1 ? 's' : ''}</AlertTitle>
-            <AlertDescription>Review interest about players on your roster.</AlertDescription>
+            <AlertTitle>{pendingIncoming} incoming club-to-club request{pendingIncoming > 1 ? 's' : ''}</AlertTitle>
+            <AlertDescription>Review interest about your committed players. The player is CC&apos;d for personal terms.</AlertDescription>
           </Alert>
         )}
 
@@ -87,15 +89,19 @@ export default function ClubEngagementsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Outgoing interest</CardTitle>
-                <CardDescription>After a player accepts, initiate a formal transfer with one click.</CardDescription>
+                <CardDescription>
+                  Free agents → roster enrollment after acceptance. Committed players → inter-club transfer after selling captain accepts.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <DataTable
                   columns={engagementColumns((row) =>
-                    row.status === 'ACCEPTED' && !row.transferInitiated ? (
-                      <Button size="sm" onClick={() => setTransferTarget(row)}>
-                        Initiate transfer
+                    row.status === 'ACCEPTED' && !row.rosterEnrollmentInitiated && !row.transferInitiated ? (
+                      <Button size="sm" onClick={() => setMovementTarget(row)}>
+                        {row.playerCommitmentStatus === 'FREE_AGENT' ? 'Initiate enrollment' : 'Initiate transfer'}
                       </Button>
+                    ) : row.rosterEnrollmentInitiated ? (
+                      <span className="text-xs text-muted-foreground">Enrollment {row.rosterEnrollmentId}</span>
                     ) : row.transferInitiated ? (
                       <span className="text-xs text-muted-foreground">Transfer {row.transferId}</span>
                     ) : null,
@@ -112,7 +118,7 @@ export default function ClubEngagementsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Incoming interest</CardTitle>
-                <CardDescription>Other clubs interested in your committed players.</CardDescription>
+                <CardDescription>Club-to-club negotiations for your committed players.</CardDescription>
               </CardHeader>
               <CardContent>
                 <DataTable
@@ -135,24 +141,28 @@ export default function ClubEngagementsPage() {
       </div>
 
       <ConfirmDialog
-        open={Boolean(transferTarget)}
-        onOpenChange={(open) => !open && setTransferTarget(null)}
-        title={`Initiate transfer for ${transferTarget?.playerName}?`}
-        description="This creates a formal transfer request for league coordinator review."
-        confirmLabel="Initiate transfer"
+        open={Boolean(movementTarget)}
+        onOpenChange={(open) => !open && setMovementTarget(null)}
+        title={`Initiate ${movementLabel} for ${movementTarget?.playerName}?`}
+        description={
+          movementTarget?.playerCommitmentStatus === 'FREE_AGENT'
+            ? 'Creates a roster enrollment request for coordinator approval (first club affiliation).'
+            : 'Creates a formal inter-club transfer for league coordinator review.'
+        }
+        confirmLabel={movementTarget?.playerCommitmentStatus === 'FREE_AGENT' ? 'Initiate enrollment' : 'Initiate transfer'}
         onConfirm={() => {
-          if (transferTarget) initiateTransferFromEngagement(transferTarget.id)
-          setTransferTarget(null)
+          if (movementTarget && user) initiateMovementFromEngagement(movementTarget.id, user)
+          setMovementTarget(null)
         }}
       />
 
       <ConfirmDialog
         open={Boolean(respondTarget)}
         onOpenChange={(open) => !open && setRespondTarget(null)}
-        title={respondTarget?.status === 'ACCEPTED' ? 'Accept engagement?' : 'Decline engagement?'}
+        title={respondTarget?.status === 'ACCEPTED' ? 'Accept club-to-club engagement?' : 'Decline engagement?'}
         description={
           respondTarget?.status === 'ACCEPTED'
-            ? 'This opens the path for the requesting club to start transfer discussions.'
+            ? 'Opens the path for the requesting club to initiate a transfer when the window is open. The player remains CC\'d for personal terms.'
             : 'The requesting club will be notified that interest was declined.'
         }
         confirmLabel={respondTarget?.status === 'ACCEPTED' ? 'Accept' : 'Decline'}

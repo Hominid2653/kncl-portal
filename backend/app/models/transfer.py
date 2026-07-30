@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
-from app.models.enums import TransferStatus
+from app.models.enums import TransferSource, TransferStatus
 
 
 
@@ -36,6 +36,27 @@ class Transfer(BaseModel):
     )
 
     reason: Mapped[str | None] = mapped_column(Text)
+
+    source: Mapped[TransferSource] = mapped_column(
+        Enum(TransferSource),
+        default=TransferSource.COORDINATOR_MANUAL,
+        nullable=False,
+    )
+
+    player_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("players.id", ondelete="SET NULL"),
+    )
+
+    engagement_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        nullable=True,
+    )
+
+    submitted_by_user_profile_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("user_profiles.id", ondelete="SET NULL"),
+    )
 
     status: Mapped[TransferStatus] = mapped_column(
         Enum(TransferStatus),

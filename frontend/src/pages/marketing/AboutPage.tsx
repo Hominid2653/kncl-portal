@@ -76,7 +76,7 @@ export default function AboutPage() {
               <div key={season.id} className="flex flex-col gap-1 rounded-lg border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <span>{season.name} <span className="text-muted-foreground">· {season.leagueName}</span></span>
                 <span className="text-muted-foreground">
-                  Registration {season.registrationOpen ? 'open' : 'closed'} · Transfers {season.transfersOpen ? 'open' : 'closed'}
+                  Roster enrollment {season.rosterEnrollmentOpen ? 'open' : 'closed'} · Transfers {season.transfersOpen ? 'open' : 'closed'}
                 </span>
               </div>
             ))}

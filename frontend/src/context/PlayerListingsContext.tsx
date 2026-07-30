@@ -34,6 +34,8 @@ interface PlayerListingsContextValue {
   reviewHeadshot: (input: ReviewHeadshotInput) => void
   getPendingHeadshotForPlayer: (playerId: string) => HeadshotModerationRequest | undefined
   addFreeAgentFromApplication: (application: PlayerRegistrationApplication, federationId: string) => string
+  commitPlayerToClub: (playerId: string, clubId: string, clubName: string) => void
+  isPlayerListed: (playerId: string) => boolean
   getHeadshotUrl: (player: Pick<PlayerListingRecord, 'id' | 'name' | 'headshotUrl'>) => string
 }
 
@@ -125,6 +127,16 @@ export function PlayerListingsProvider({ children }: { children: ReactNode }) {
         setListings((prev) => [newPlayer, ...prev])
         return playerId
       },
+      commitPlayerToClub: (playerId, clubId, clubName) => {
+        setListings((prev) =>
+          prev.map((p) =>
+            p.id === playerId
+              ? { ...p, commitmentStatus: 'COMMITTED', clubId, club: clubName }
+              : p,
+          ),
+        )
+      },
+      isPlayerListed: (playerId) => listings.some((p) => p.id === playerId),
       getHeadshotUrl,
     }),
     [listings, headshotModerations, getHeadshotUrl],

@@ -11,6 +11,7 @@ import { useSeason } from '@/context/SeasonContext'
 import { clubs, clubMembers } from '@/data/mockData'
 import { getClubLeagueId } from '@/lib/coordinator'
 import type { ClubMemberRecord } from '@/types'
+import { MIN_ROSTER_SIZE } from '@/lib/business-rules'
 import PortalLayout from '@/layouts/PortalLayout'
 
 const columns: ColumnDef<ClubMemberRecord, unknown>[] = [
@@ -21,13 +22,15 @@ const columns: ColumnDef<ClubMemberRecord, unknown>[] = [
 
 export default function ClubRosterPage() {
   const { user } = useAuth()
-  const { isClubInInitialRosterPeriod } = useOnboarding()
+  const { isClubInInitialRosterPeriod, getClubRosterCount } = useOnboarding()
   const { canModifyRoster, getSeasonForLeague } = useSeason()
 
   const club = clubs.find((c) => c.id === user?.clubId)
   const leagueId = club?.leagueId ?? getClubLeagueId(user?.clubId)
   const season = getSeasonForLeague(leagueId)
   const inInitialPeriod = user?.clubId ? isClubInInitialRosterPeriod(user.clubId) : false
+  const rosterCount = user?.clubId ? getClubRosterCount(user.clubId) : 0
+
   const canAdd = canModifyRoster(leagueId, inInitialPeriod)
 
   return (
@@ -46,8 +49,10 @@ export default function ClubRosterPage() {
 
         {inInitialPeriod && (
           <Alert className="border-l-4 border-l-kenya-green">
-            <AlertTitle>Initial roster period active</AlertTitle>
-            <AlertDescription>You can build your first squad from free agents even though the league transfer window may be closed.</AlertDescription>
+            <AlertTitle>Initial roster period active ({rosterCount}/{MIN_ROSTER_SIZE})</AlertTitle>
+            <AlertDescription>
+              Build your first squad from free agents. This period ends automatically when you reach {MIN_ROSTER_SIZE} approved roster members.
+            </AlertDescription>
           </Alert>
         )}
 

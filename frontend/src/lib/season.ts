@@ -2,13 +2,18 @@
 import { seasons } from '@/data/mockData'
 
 export function getCurrentSeason() {
-  return seasons.find((s) => s.transfersOpen || s.registrationOpen) ?? seasons[seasons.length - 1]
+  return seasons.find((s) => s.transfersOpen || s.rosterEnrollmentOpen) ?? seasons[seasons.length - 1]
 }
 
 export function isTransferWindowOpen() {
   return getCurrentSeason().transfersOpen
 }
 
+export function isRosterEnrollmentOpen() {
+  return getCurrentSeason().rosterEnrollmentOpen
+}
+
+/** @deprecated Use isRosterEnrollmentOpen */
 export function isRegistrationWindowOpen() {
-  return getCurrentSeason().registrationOpen
+  return isRosterEnrollmentOpen()
 }

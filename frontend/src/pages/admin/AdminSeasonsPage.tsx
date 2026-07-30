@@ -11,11 +11,11 @@ import PortalLayout from '@/layouts/PortalLayout'
 import type { SeasonRecord } from '@/types'
 
 export default function AdminSeasonsPage() {
-  const { seasons, toggleRegistration, toggleTransfers } = useSeason()
+  const { seasons, toggleRosterEnrollment, toggleTransfers } = useSeason()
   const [windowConfirm, setWindowConfirm] = useState<{
     seasonId: string
     seasonName: string
-    type: 'registration' | 'transfers'
+    type: 'rosterEnrollment' | 'transfers'
     open: boolean
   } | null>(null)
 
@@ -24,20 +24,20 @@ export default function AdminSeasonsPage() {
     { accessorKey: 'leagueName', header: 'League' },
     { accessorKey: 'year', header: 'Year' },
     {
-      id: 'reg',
-      header: 'Registration window',
+      id: 'enrollment',
+      header: 'Roster enrollment window',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Badge variant={row.original.registrationOpen ? 'secondary' : 'outline'}>
-            {row.original.registrationOpen ? 'Open' : 'Closed'}
+          <Badge variant={row.original.rosterEnrollmentOpen ? 'secondary' : 'outline'}>
+            {row.original.rosterEnrollmentOpen ? 'Open' : 'Closed'}
           </Badge>
           <Button size="sm" variant="outline" onClick={() => setWindowConfirm({
             seasonId: row.original.id,
             seasonName: row.original.name,
-            type: 'registration',
-            open: !row.original.registrationOpen,
+            type: 'rosterEnrollment',
+            open: !row.original.rosterEnrollmentOpen,
           })}>
-            {row.original.registrationOpen ? 'Close' : 'Open'}
+            {row.original.rosterEnrollmentOpen ? 'Close' : 'Open'}
           </Button>
         </div>
       ),
@@ -69,14 +69,14 @@ export default function AdminSeasonsPage() {
         <div>
           <h1 className="text-2xl font-semibold">Seasons &amp; windows</h1>
           <p className="text-sm text-muted-foreground">
-            Windows are per league. KNCL and KWCL can have different transfer schedules.
+            Roster enrollment gates free-agent first affiliations. Transfer window gates inter-club moves. Player/club applications are always open (with OTP).
           </p>
         </div>
 
         <Alert className="border-l-4 border-l-kenya-green">
           <AlertTitle>Per-league control</AlertTitle>
           <AlertDescription>
-            Closing KWCL transfers does not affect KNCL. New clubs in initial roster period can still build squads when their league window is closed.
+            KWCL can keep roster enrollment open while transfers stay closed. New clubs use initial roster period until they reach the minimum squad size.
           </AlertDescription>
         </Alert>
 
@@ -89,15 +89,15 @@ export default function AdminSeasonsPage() {
         title={windowConfirm?.open ? 'Open window?' : 'Close window?'}
         description={
           windowConfirm
-            ? `${windowConfirm.open ? 'Open' : 'Close'} the ${windowConfirm.type} window for ${windowConfirm.seasonName}. This affects roster eligibility for that league.`
+            ? `${windowConfirm.open ? 'Open' : 'Close'} the ${windowConfirm.type === 'rosterEnrollment' ? 'roster enrollment' : 'transfer'} window for ${windowConfirm.seasonName}.`
             : ''
         }
         confirmLabel={windowConfirm?.open ? 'Open' : 'Close'}
         variant={windowConfirm?.open ? 'default' : 'destructive'}
         onConfirm={() => {
           if (!windowConfirm) return
-          if (windowConfirm.type === 'registration') {
-            toggleRegistration(windowConfirm.seasonId, windowConfirm.open)
+          if (windowConfirm.type === 'rosterEnrollment') {
+            toggleRosterEnrollment(windowConfirm.seasonId, windowConfirm.open)
           } else {
             toggleTransfers(windowConfirm.seasonId, windowConfirm.open)
           }

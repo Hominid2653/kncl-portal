@@ -1,12 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { PlusIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { DataTable } from '@/components/data-table'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { transferStatusLabels, transferStatusVariants } from '@/constants/status'
-import { transfers } from '@/data/mockData'
+import { useTransfers } from '@/context/TransferContext'
 import type { TransferRecord } from '@/types'
 import PortalLayout from '@/layouts/PortalLayout'
 
@@ -18,13 +17,23 @@ const columns: ColumnDef<TransferRecord, unknown>[] = [
 ]
 
 export default function ClubTransfersPage() {
+  const { transfers } = useTransfers()
+
   return (
     <PortalLayout portalLabel="Club portal">
       <div className="space-y-6">
-        <div className="flex justify-between gap-4">
-          <div><h1 className="text-2xl font-semibold">Transfers</h1></div>
-          <Button render={<Link to="/club/transfers/new" />}><PlusIcon data-icon="inline-start" />New transfer</Button>
+        <div>
+          <h1 className="text-2xl font-semibold">Transfers</h1>
+          <p className="text-sm text-muted-foreground">
+            Inter-club moves initiated from accepted engagements. Manual transfer entry is restricted to league coordinators.
+          </p>
         </div>
+        <Alert>
+          <AlertTitle>Engagement-first workflow</AlertTitle>
+          <AlertDescription>
+            Start from <Link to="/club/engagements" className="underline">Engagements</Link> after a selling captain accepts interest in a committed player.
+          </AlertDescription>
+        </Alert>
         <DataTable columns={columns} data={transfers} searchKey="playerName" searchPlaceholder="Search..." />
       </div>
     </PortalLayout>

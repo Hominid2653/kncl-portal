@@ -1,7 +1,9 @@
 export type UserRole = 'PLAYER' | 'CLUB_ADMIN' | 'LEAGUE_COORDINATOR' | 'FEDERATION_ADMIN'
 
-export type RegistrationStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+export type RosterEnrollmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 export type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+/** @deprecated Use RosterEnrollmentStatus */
+export type RegistrationStatus = RosterEnrollmentStatus
 export type TransferStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 
 export type PlayerCommitmentStatus = 'FREE_AGENT' | 'COMMITTED'
@@ -43,6 +45,10 @@ export interface EngagementRequest {
   message: string
   status: EngagementStatus
   createdAt: string
+  /** Committed-player moves: player is CC'd for personal terms; selling captain decides. */
+  playerCc?: boolean
+  rosterEnrollmentInitiated?: boolean
+  rosterEnrollmentId?: string
   transferInitiated?: boolean
   transferId?: string
 }
@@ -91,24 +97,40 @@ export interface ClubMemberRecord {
   joinedAt: string
 }
 
-export interface RegistrationRecord {
+/** Season player ↔ club ↔ season affiliation (backend: `registrations` table). */
+export interface RosterEnrollmentRecord {
   id: string
+  playerId: string
   playerName: string
+  clubId: string
   club: string
   season: string
-  status: RegistrationStatus
+  status: RosterEnrollmentStatus
   submittedAt: string
+  reviewedAt?: string
+  reviewedBy?: string
+  rejectionReason?: string
+  engagementId?: string
+  source?: 'FREE_AGENT_ENGAGEMENT' | 'COORDINATOR_MANUAL'
 }
+
+/** @deprecated Use RosterEnrollmentRecord */
+export type RegistrationRecord = RosterEnrollmentRecord
 
 export interface TransferRecord {
   id: string
+  playerId?: string
   playerName: string
+  fromClubId?: string
   fromClub: string
+  toClubId?: string
   toClub: string
   status: TransferStatus
   submittedAt: string
   reason?: string
   engagementId?: string
+  source?: 'ENGAGEMENT' | 'PLAYER_REQUEST' | 'COORDINATOR_MANUAL'
+  submittedByPlayerId?: string
 }
 
 export interface DocumentRecord {
@@ -147,7 +169,9 @@ export interface SeasonRecord {
   leagueId: string
   leagueName: string
   year: number
-  registrationOpen: boolean
+  /** Gates new roster enrollments (free-agent first affiliation) for the season. */
+  rosterEnrollmentOpen: boolean
+  /** Gates inter-club transfers and roster mutations outside initial roster period. */
   transfersOpen: boolean
 }
 
@@ -174,13 +198,14 @@ export interface ClubCaptainApplication {
   captainPhone: string
   status: ApplicationStatus
   submittedAt: string
+  emailVerifiedAt?: string
   reviewedAt?: string
   reviewedBy?: string
   rejectionReason?: string
   createdClubId?: string
 }
 
-export interface PlayerRegistrationApplication {
+export interface PlayerProfileApplication {
   id: string
   firstName: string
   lastName: string
@@ -192,10 +217,14 @@ export interface PlayerRegistrationApplication {
   federationId?: string
   status: ApplicationStatus
   submittedAt: string
+  emailVerifiedAt?: string
   reviewedAt?: string
   reviewedBy?: string
   rejectionReason?: string
 }
+
+/** @deprecated Use PlayerProfileApplication */
+export type PlayerRegistrationApplication = PlayerProfileApplication
 
 export type HeadshotModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 

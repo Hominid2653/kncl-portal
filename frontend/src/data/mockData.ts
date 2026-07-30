@@ -7,7 +7,7 @@ import type {
   LeagueRecord,
   NotificationRecord,
   PlayerRecord,
-  RegistrationRecord,
+  RosterEnrollmentRecord,
   SeasonRecord,
   TransferRecord,
   UserProfileRecord,
@@ -61,7 +61,7 @@ export const seasons: SeasonRecord[] = [
     leagueId: '11111111-1111-4111-8111-111111111101',
     leagueName: 'Kenya National Chess League',
     year: 2025,
-    registrationOpen: false,
+    rosterEnrollmentOpen: false,
     transfersOpen: false,
   },
   {
@@ -70,7 +70,7 @@ export const seasons: SeasonRecord[] = [
     leagueId: '11111111-1111-4111-8111-111111111101',
     leagueName: 'Kenya National Chess League',
     year: 2026,
-    registrationOpen: true,
+    rosterEnrollmentOpen: true,
     transfersOpen: true,
   },
   {
@@ -79,7 +79,7 @@ export const seasons: SeasonRecord[] = [
     leagueId: '11111111-1111-4111-8111-111111111104',
     leagueName: 'Kenya Women\'s Chess League',
     year: 2026,
-    registrationOpen: true,
+    rosterEnrollmentOpen: true,
     transfersOpen: false,
   },
 ]
@@ -136,16 +136,19 @@ export const clubMembers: ClubMemberRecord[] = [
   { id: '3', playerName: 'Brian Mwangi', club: 'Nairobi Kings', position: 'Reserve', joinedAt: 'Jul 2025' },
 ]
 
-export const registrations: RegistrationRecord[] = [
-  { id: 'R-301', playerName: 'Brian Mwangi', club: 'Nairobi Kings', season: 'KNCL 2026 Season', status: 'PENDING', submittedAt: 'Jul 28, 08:30' },
-  { id: 'R-302', playerName: 'Faith Njeri', club: 'Eldoret Falcons', season: 'KNCL 2026 Season', status: 'APPROVED', submittedAt: 'Jul 27, 14:10' },
-  { id: 'R-303', playerName: 'Kevin Ochieng', club: 'Mombasa Rooks', season: 'KNCL 2026 Season', status: 'PENDING', submittedAt: 'Jul 26, 11:45' },
+export const rosterEnrollments: RosterEnrollmentRecord[] = [
+  { id: 'RE-301', playerId: '44444444-4444-4444-8444-444444444503', playerName: 'Brian Mwangi', clubId: '22222222-2222-4222-8222-222222222201', club: 'Nairobi Kings', season: 'KNCL 2026 Season', status: 'PENDING', submittedAt: 'Jul 28, 08:30', source: 'FREE_AGENT_ENGAGEMENT', engagementId: 'E-003' },
+  { id: 'RE-302', playerId: '44444444-4444-4444-8444-444444444502', playerName: 'Kevin Ochieng', clubId: '22222222-2222-4222-8222-222222222202', club: 'Mombasa Rooks', season: 'KNCL 2026 Season', status: 'APPROVED', submittedAt: 'Jul 27, 14:10', source: 'FREE_AGENT_ENGAGEMENT' },
+  { id: 'RE-303', playerId: '44444444-4444-4444-8444-444444444501', playerName: 'Faith Njeri', clubId: '22222222-2222-4222-8222-222222222203', club: 'Kisumu Lions', season: 'KNCL 2026 Season', status: 'PENDING', submittedAt: 'Jul 26, 11:45', source: 'FREE_AGENT_ENGAGEMENT' },
 ]
 
+/** @deprecated Use rosterEnrollments */
+export const registrations = rosterEnrollments
+
 export const transfers: TransferRecord[] = [
-  { id: 'T-201', playerName: 'Moses Kamau', fromClub: 'Nairobi Kings', toClub: 'Eldoret Falcons', status: 'PENDING', submittedAt: 'Jul 28, 08:30', reason: 'Relocation' },
-  { id: 'T-202', playerName: 'Amina Hassan', fromClub: 'Mombasa Rooks', toClub: 'Kisumu Lions', status: 'APPROVED', submittedAt: 'Jul 27, 11:10' },
-  { id: 'T-203', playerName: 'Daniel Otieno', fromClub: 'Kisumu Lions', toClub: 'Nairobi Kings', status: 'PENDING', submittedAt: 'Jul 26, 14:45' },
+  { id: 'T-201', playerId: '44444444-4444-4444-8444-444444444401', playerName: 'Moses Kamau', fromClubId: '22222222-2222-4222-8222-222222222201', fromClub: 'Nairobi Kings', toClubId: '22222222-2222-4222-8222-222222222203', toClub: 'Kisumu Lions', status: 'PENDING', submittedAt: 'Jul 28, 08:30', reason: 'Relocation', source: 'PLAYER_REQUEST', submittedByPlayerId: '44444444-4444-4444-8444-444444444401' },
+  { id: 'T-202', playerId: '44444444-4444-4444-8444-444444444402', playerName: 'Amina Hassan', fromClubId: '22222222-2222-4222-8222-222222222202', fromClub: 'Mombasa Rooks', toClubId: '22222222-2222-4222-8222-222222222203', toClub: 'Kisumu Lions', status: 'APPROVED', submittedAt: 'Jul 27, 11:10', source: 'ENGAGEMENT' },
+  { id: 'T-203', playerId: '44444444-4444-4444-8444-444444444403', playerName: 'Daniel Otieno', fromClubId: '22222222-2222-4222-8222-222222222203', fromClub: 'Kisumu Lions', toClubId: '22222222-2222-4222-8222-222222222201', toClub: 'Nairobi Kings', status: 'PENDING', submittedAt: 'Jul 26, 14:45', source: 'ENGAGEMENT' },
 ]
 
 export const documents: DocumentRecord[] = [
@@ -161,7 +164,7 @@ export const notifications: NotificationRecord[] = [
 ]
 
 export const auditLogs: AuditLogRecord[] = [
-  { id: 'A-1', action: 'registration.approved', entity: 'Registration R-302', actor: 'James Mutua', createdAt: 'Jul 27, 14:15' },
+  { id: 'A-1', action: 'roster_enrollment.approved', entity: 'Enrollment RE-302', actor: 'James Mutua', createdAt: 'Jul 27, 14:15' },
   { id: 'A-2', action: 'transfer.submitted', entity: 'Transfer T-201', actor: 'Peter Ochieng', createdAt: 'Jul 28, 08:30' },
   { id: 'A-3', action: 'player.created', entity: 'Player KEN-2404', actor: 'Peter Ochieng', createdAt: 'Jul 26, 10:00' },
 ]

@@ -16,6 +16,7 @@ import PlayerDashboardPage from '@/pages/player/PlayerDashboardPage'
 import PlayerProfilePage from '@/pages/player/PlayerProfilePage'
 import PlayerAccountsPage from '@/pages/player/PlayerAccountsPage'
 import PlayerRegistrationsPage from '@/pages/player/PlayerRegistrationsPage'
+import PlayerTransferNewPage from '@/pages/player/PlayerTransferNewPage'
 import PlayerTransfersPage from '@/pages/player/PlayerTransfersPage'
 import PlayerNotificationsPage from '@/pages/player/PlayerNotificationsPage'
 import PlayerEngagementsPage from '@/pages/player/PlayerEngagementsPage'
@@ -72,6 +73,7 @@ const router = createBrowserRouter([
       { path: '/player/engagements', element: <PlayerEngagementsPage /> },
       { path: '/player/registrations', element: <PlayerRegistrationsPage /> },
       { path: '/player/transfers', element: <PlayerTransfersPage /> },
+      { path: '/player/transfers/new', element: <PlayerTransferNewPage /> },
       { path: '/player/notifications', element: <PlayerNotificationsPage /> },
     ],
   },
@@ -87,7 +89,6 @@ const router = createBrowserRouter([
       { path: '/club/registrations', element: <ClubRegistrationsPage /> },
       { path: '/club/registrations/new', element: <ClubRegistrationNewPage /> },
       { path: '/club/transfers', element: <ClubTransfersPage /> },
-      { path: '/club/transfers/new', element: <ClubTransferNewPage /> },
       { path: '/club/documents', element: <ClubDocumentsPage /> },
     ],
   },
@@ -102,6 +103,7 @@ const router = createBrowserRouter([
       { path: '/admin/seasons', element: <AdminSeasonsPage /> },
       { path: '/admin/registrations', element: <AdminRegistrationsPage /> },
       { path: '/admin/transfers', element: <AdminTransfersPage /> },
+      { path: '/admin/transfers/new', element: <ClubTransferNewPage /> },
       { path: '/admin/clubs', element: <AdminClubsPage /> },
       { path: '/admin/players', element: <AdminPlayersPage /> },
       { path: '/admin/audit-logs', element: <AdminAuditLogsPage /> },

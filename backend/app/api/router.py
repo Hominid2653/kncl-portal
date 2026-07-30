@@ -2,7 +2,9 @@ from fastapi import APIRouter
 
 from app.api.v1.health import router as health_router
 from app.api.v1.endpoints import (
+    application_status,
     audit_logs,
+    auth_otp,
     clubs,
     club_members,
     dashboard,
@@ -21,6 +23,8 @@ from app.api.v1.endpoints import (
 api_router = APIRouter()
 
 api_router.include_router(health_router)
+api_router.include_router(auth_otp.router)
+api_router.include_router(application_status.router)
 api_router.include_router(leagues.router)
 api_router.include_router(clubs.router)
 api_router.include_router(seasons.router)

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,6 +29,17 @@ class Club(BaseModel):
     description: Mapped[str | None] = mapped_column(Text)
     logo: Mapped[str | None] = mapped_column(Text)
     founded_year: Mapped[int | None] = mapped_column(Integer)
+
+    initial_roster_period_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+    approved_roster_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
 
     league = relationship("League", back_populates="clubs")
     

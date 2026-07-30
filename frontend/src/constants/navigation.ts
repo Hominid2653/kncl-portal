@@ -41,7 +41,7 @@ export const playerNav: NavItem[] = [
   { title: 'Profile', href: '/player/profile', icon: UserCircle2 },
   { title: 'External accounts', href: '/player/accounts', icon: Shield },
   { title: 'Engagements', href: '/player/engagements', icon: Handshake },
-  { title: 'Registrations', href: '/player/registrations', icon: ClipboardList },
+  { title: 'Roster enrollments', href: '/player/registrations', icon: ClipboardList },
   { title: 'Transfers', href: '/player/transfers', icon: ArrowRightLeft },
   { title: 'Notifications', href: '/player/notifications', icon: Bell },
 ]
@@ -51,7 +51,7 @@ export const clubNav: NavItem[] = [
   { title: 'Roster', href: '/club/roster', icon: Users },
   { title: 'Players', href: '/club/players', icon: UserCircle2 },
   { title: 'Engagements', href: '/club/engagements', icon: Handshake },
-  { title: 'Registrations', href: '/club/registrations', icon: ClipboardList },
+  { title: 'Roster enrollments', href: '/club/registrations', icon: ClipboardList },
   { title: 'Transfers', href: '/club/transfers', icon: ArrowRightLeft },
   { title: 'Documents', href: '/club/documents', icon: FileText },
 ]
@@ -62,7 +62,7 @@ export const coordinatorNav: NavItem[] = [
   { title: 'Player applications', href: '/admin/player-applications', icon: UserCircle2 },
   { title: 'Headshot moderation', href: '/admin/headshot-moderation', icon: ImageIcon },
   { title: 'Seasons', href: '/admin/seasons', icon: CalendarRange },
-  { title: 'Registration queue', href: '/admin/registrations', icon: ClipboardList },
+  { title: 'Roster enrollment queue', href: '/admin/registrations', icon: ClipboardList },
   { title: 'Transfer queue', href: '/admin/transfers', icon: ArrowRightLeft },
   { title: 'Clubs', href: '/admin/clubs', icon: Building2 },
   { title: 'Players', href: '/admin/players', icon: UserCircle2 },

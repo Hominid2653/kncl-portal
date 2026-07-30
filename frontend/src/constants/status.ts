@@ -1,21 +1,27 @@
 import type { VariantProps } from 'class-variance-authority'
 
 import { badgeVariants } from '@/components/ui/badge'
-import type { EngagementStatus, RegistrationStatus, TransferStatus } from '@/types'
+import type { EngagementStatus, RosterEnrollmentStatus, TransferStatus } from '@/types'
 
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>
 
-export const registrationStatusLabels: Record<RegistrationStatus, string> = {
+export const rosterEnrollmentStatusLabels: Record<RosterEnrollmentStatus, string> = {
   PENDING: 'Pending review',
   APPROVED: 'Approved',
   REJECTED: 'Rejected',
 }
 
-export const registrationStatusVariants: Record<RegistrationStatus, BadgeVariant> = {
+export const rosterEnrollmentStatusVariants: Record<RosterEnrollmentStatus, BadgeVariant> = {
   PENDING: 'outline',
   APPROVED: 'secondary',
   REJECTED: 'destructive',
 }
+
+/** @deprecated Use rosterEnrollmentStatusLabels */
+export const registrationStatusLabels = rosterEnrollmentStatusLabels
+
+/** @deprecated Use rosterEnrollmentStatusVariants */
+export const registrationStatusVariants = rosterEnrollmentStatusVariants
 
 export const transferStatusLabels: Record<TransferStatus, string> = {
   PENDING: 'Pending',

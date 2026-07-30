@@ -158,8 +158,8 @@ class RegistrationService(BaseService[Registration]):
         season = await self.season_repository.get_by_id(db, data.season_id)
         if not season:
             raise ResourceNotFound("Season not found.")
-        if not season.registration_open:
-            raise ValidationError("Registration is closed for this season.")
+        if not season.roster_enrollment_open:
+            raise ValidationError("Roster enrollment is closed for this season.")
 
     def _ensure_pending(self, registration: Registration, action: str) -> None:
         if registration.status is not RegistrationStatus.PENDING:

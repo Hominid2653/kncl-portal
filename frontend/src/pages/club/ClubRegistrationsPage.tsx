@@ -1,31 +1,57 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { PlusIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { DataTable } from '@/components/data-table'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { registrationStatusLabels, registrationStatusVariants } from '@/constants/status'
-import { registrations } from '@/data/mockData'
-import type { RegistrationRecord } from '@/types'
+import { rosterEnrollmentStatusLabels, rosterEnrollmentStatusVariants } from '@/constants/status'
+import { useAuth } from '@/context/AuthContext'
+import { useRosterEnrollments } from '@/context/RosterEnrollmentContext'
+import type { RosterEnrollmentRecord } from '@/types'
 import PortalLayout from '@/layouts/PortalLayout'
 
-const columns: ColumnDef<RegistrationRecord, unknown>[] = [
-  { accessorKey: 'playerName', header: 'Player' },
-  { accessorKey: 'season', header: 'Season' },
-  { accessorKey: 'status', header: 'Status', cell: ({ row }) => <Badge variant={registrationStatusVariants[row.original.status]}>{registrationStatusLabels[row.original.status]}</Badge> },
-  { accessorKey: 'submittedAt', header: 'Submitted' },
-]
-
 export default function ClubRegistrationsPage() {
+  const { user } = useAuth()
+  const { rosterEnrollments } = useRosterEnrollments()
+
+  const clubEnrollments = rosterEnrollments.filter((e) => e.clubId === user?.clubId)
+
+  const columns: ColumnDef<RosterEnrollmentRecord, unknown>[] = [
+    { accessorKey: 'playerName', header: 'Player' },
+    { accessorKey: 'season', header: 'Season' },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge variant={rosterEnrollmentStatusVariants[row.original.status]}>
+          {rosterEnrollmentStatusLabels[row.original.status]}
+        </Badge>
+      ),
+    },
+    { accessorKey: 'submittedAt', header: 'Submitted' },
+  ]
+
   return (
     <PortalLayout portalLabel="Club portal">
       <div className="space-y-6">
-        <div className="flex justify-between gap-4">
-          <div><h1 className="text-2xl font-semibold">Registrations</h1></div>
-          <Button render={<Link to="/club/registrations/new" />}><PlusIcon data-icon="inline-start" />New registration</Button>
+        <div>
+          <h1 className="text-2xl font-semibold">Roster enrollments</h1>
+          <p className="text-sm text-muted-foreground">
+            First club affiliations for free agents you engaged. New enrollments start from accepted engagements.
+          </p>
         </div>
-        <DataTable columns={columns} data={registrations} searchKey="playerName" searchPlaceholder="Search..." />
+
+        <Alert>
+          <AlertTitle>Engagement-first workflow</AlertTitle>
+          <AlertDescription>
+            To add a free agent, use <Link to="/club/players/new" className="underline">Add free agent</Link> or{' '}
+            <Link to="/club/engagements" className="underline">Engagements</Link> — not a manual form here.
+          </AlertDescription>
+        </Alert>
+
+        <DataTable columns={columns} data={clubEnrollments} searchKey="playerName" searchPlaceholder="Search..." />
+        <Button variant="outline" render={<Link to="/club/engagements" />}>View engagements</Button>
       </div>
     </PortalLayout>
   )

@@ -25,7 +25,7 @@ const options = [
   },
   {
     title: 'Check application status',
-    description: 'Track your player or club application and see coordinator feedback if rejected.',
+    description: 'Track your player or club application. Email verification required before viewing status.',
     href: '/register/status',
     icon: ClipboardListIcon,
   },
