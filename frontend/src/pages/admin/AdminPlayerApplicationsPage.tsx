@@ -15,7 +15,7 @@ import type { PlayerRegistrationApplication } from '@/types'
 
 export default function AdminPlayerApplicationsPage() {
   const { user } = useAuth()
-  const { getScopedPlayerApplications, getScopedPendingCounts, reviewPlayerApplication } = useOnboarding()
+  const { getScopedPlayerApplications, getScopedPendingCounts, reviewPlayerApplication, applicationsLoading } = useOnboarding()
   const [rejectTarget, setRejectTarget] = useState<PlayerRegistrationApplication | null>(null)
   const [approveTarget, setApproveTarget] = useState<PlayerRegistrationApplication | null>(null)
 
@@ -87,7 +87,9 @@ export default function AdminPlayerApplicationsPage() {
         {user?.role === 'LEAGUE_COORDINATOR' && (
           <Alert>
             <AlertTitle>League scope</AlertTitle>
-            <AlertDescription>Showing applications for your assigned leagues only.</AlertDescription>
+            <AlertDescription>
+              Club applications are filtered to your leagues. Player profile requests are federation-wide and visible to all coordinators.
+            </AlertDescription>
           </Alert>
         )}
 
@@ -98,7 +100,13 @@ export default function AdminPlayerApplicationsPage() {
           </Alert>
         )}
 
-        <DataTable columns={columns} data={applications} searchKey="email" searchPlaceholder="Search by email..." />
+        <DataTable
+          columns={columns}
+          data={applications}
+          loading={applicationsLoading}
+          searchKey="email"
+          searchPlaceholder="Search by email..."
+        />
       </div>
 
       <ConfirmDialog

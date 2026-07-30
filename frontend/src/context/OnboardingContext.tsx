@@ -58,6 +58,7 @@ interface ReviewInput {
 interface OnboardingContextValue {
   clubApplications: ClubCaptainApplication[]
   playerApplications: PlayerRegistrationApplication[]
+  applicationsLoading: boolean
   initialRosterClubIds: string[]
   submitClubApplication: (input: SubmitClubApplicationInput, emailVerificationToken: string) => string
   submitPlayerRegistration: (input: SubmitPlayerRegistrationInput, emailVerificationToken: string) => string
@@ -92,6 +93,7 @@ interface ApiClubApplication {
   club_name: string
   county: string
   league_id: string
+  league_name?: string | null
   description?: string | null
   captain_first_name: string
   captain_last_name: string
@@ -122,7 +124,7 @@ function mapClubApplicationFromApi(item: ApiClubApplication): ClubCaptainApplica
     clubName: item.club_name,
     county: item.county,
     leagueId: item.league_id,
-    leagueName: '',
+    leagueName: item.league_name ?? '',
     description: item.description ?? undefined,
     captainFirstName: item.captain_first_name,
     captainLastName: item.captain_last_name,
@@ -207,6 +209,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const clubApplications = USE_API ? (clubAppsQuery.data ?? []) : mockClubApplications
   const playerApplications = USE_API ? (playerAppsQuery.data ?? []) : mockPlayerApplications
+  const applicationsLoading =
+    USE_API &&
+    isCoordinator &&
+    (clubAppsQuery.isPending || playerAppsQuery.isPending) &&
+    !clubAppsQuery.data &&
+    !playerAppsQuery.data
 
   const setClubApplications = (updater: SetStateAction<ClubCaptainApplication[]>) => {
     if (USE_API) {
@@ -233,6 +241,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const invalidateApplications = () => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.clubApplications })
     void queryClient.invalidateQueries({ queryKey: queryKeys.playerApplications })
+    void queryClient.invalidateQueries({ queryKey: ['portal'] })
   }
 
   useEffect(() => {
@@ -245,6 +254,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     () => ({
       clubApplications,
       playerApplications,
+      applicationsLoading,
       initialRosterClubIds,
       getClubApplicationByEmail: (email) => findLatestByEmail(clubApplications, email, 'captainEmail'),
       getPlayerApplicationByEmail: (email) => findLatestByEmail(playerApplications, email, 'email'),
@@ -387,7 +397,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        if (USE_API && accessToken) {
+        if (USE_API && hasApiSession()) {
           void reviewClubApplication(
             id,
             { status, rejection_reason: rejectionReason },
@@ -461,7 +471,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        if (USE_API && accessToken) {
+        if (USE_API && hasApiSession()) {
           void reviewPlayerApplication(
             id,
             { status, rejection_reason: rejectionReason },
@@ -532,7 +542,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [clubApplications, playerApplications, initialRosterClubIds, clubRosterCounts, addFreeAgentFromApplication, provisionUser, consumeToken, accessToken],
+    [clubApplications, playerApplications, applicationsLoading, initialRosterClubIds, clubRosterCounts, addFreeAgentFromApplication, provisionUser, consumeToken, accessToken],
   )
 
   return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>

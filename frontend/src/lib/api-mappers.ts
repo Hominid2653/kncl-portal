@@ -246,10 +246,19 @@ export function adminStatsFromTotals(totals: {
   players: number
   registrations: number
   transfers: number
+  unread_notifications?: number
+  pending_club_applications?: number
+  pending_player_applications?: number
+  pending_engagements?: number
+  pending_headshots?: number
 }): DashboardStat[] {
   return [
     { label: 'Clubs', value: String(totals.clubs) },
     { label: 'Players', value: String(totals.players) },
+    { label: 'Pending club apps', value: String(totals.pending_club_applications ?? 0) },
+    { label: 'Pending player apps', value: String(totals.pending_player_applications ?? 0) },
+    { label: 'Pending headshots', value: String(totals.pending_headshots ?? 0) },
+    { label: 'Pending engagements', value: String(totals.pending_engagements ?? 0) },
     { label: 'Registrations', value: String(totals.registrations) },
     { label: 'Transfers', value: String(totals.transfers) },
   ]

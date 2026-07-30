@@ -175,7 +175,15 @@ export interface ApiAdminDashboard {
     pending_club_applications?: number
     pending_player_applications?: number
     pending_engagements?: number
+    pending_headshots?: number
   }
+  transfer_counts?: Array<{ status: string; count: number }>
+  pending_by_club?: Array<{
+    club_id: string
+    club_name: string
+    pending_transfers: number
+    pending_registrations: number
+  }>
   recent_activity: ApiActivityItem[]
 }
 

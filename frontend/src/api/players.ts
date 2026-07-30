@@ -57,9 +57,16 @@ export async function moderatePlayerHeadshot(
 
 export async function listPlayersPendingHeadshots() {
   if (!USE_API) return null
-  return apiRequest<{ items: Array<{ id: string; headshot_url?: string | null; headshot_moderation_status?: string }>; total: number }>(
-    '/players/?filter=headshot_moderation_status=PENDING&page_size=100',
-  )
+  return apiRequest<{
+    items: Array<{
+      player_id: string
+      player_name: string
+      headshot_url?: string | null
+      league_id?: string | null
+      headshot_updated_at?: string | null
+    }>
+    total: number
+  }>('/players/headshots/pending')
 }
 
 export async function syncLichessRatings(playerId: string) {

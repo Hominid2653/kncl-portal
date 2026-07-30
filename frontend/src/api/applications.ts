@@ -57,18 +57,18 @@ export async function postPlayerApplication(
 
 export async function listClubApplications(token?: string | null) {
   if (!USE_API) return null
-  return apiRequest<{ items: unknown[]; total: number }>('/club-applications/', { token })
+  return apiRequest<{ items: unknown[]; total: number }>('/club-applications/?page_size=100', { token })
 }
 
 export async function listPlayerApplications(token?: string | null) {
   if (!USE_API) return null
-  return apiRequest<{ items: unknown[]; total: number }>('/player-applications/', { token })
+  return apiRequest<{ items: unknown[]; total: number }>('/player-applications/?page_size=100', { token })
 }
 
 export async function reviewClubApplication(
   id: string,
   payload: ApplicationReviewPayload,
-  token: string,
+  token?: string | null,
 ) {
   if (!USE_API) return null
   return apiRequest(`/club-applications/${id}`, {
@@ -81,7 +81,7 @@ export async function reviewClubApplication(
 export async function reviewPlayerApplication(
   id: string,
   payload: ApplicationReviewPayload,
-  token: string,
+  token?: string | null,
 ) {
   if (!USE_API) return null
   return apiRequest(`/player-applications/${id}`, {

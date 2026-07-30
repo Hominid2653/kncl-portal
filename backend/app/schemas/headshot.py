@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, HttpUrl
 
 from app.models.enums import HeadshotSource
+from app.schemas.common import ListResponse
 
 
 class HeadshotUpdate(BaseModel):
@@ -21,3 +22,15 @@ class HeadshotResponse(BaseModel):
     headshot_source: HeadshotSource | None = None
     headshot_moderation_status: str
     headshot_updated_at: datetime | None = None
+
+
+class PendingHeadshotItem(BaseModel):
+    player_id: UUID
+    player_name: str
+    headshot_url: str | None = None
+    league_id: UUID | None = None
+    headshot_updated_at: datetime | None = None
+
+
+class PendingHeadshotListResponse(ListResponse):
+    items: list[PendingHeadshotItem]

@@ -223,6 +223,19 @@ class DashboardRepository:
         )
         return int(result.scalar_one())
 
+    async def count_pending_headshots(self, db: AsyncSession) -> int:
+        from app.models.player import Player
+
+        result = await db.execute(
+            select(func.count())
+            .select_from(Player)
+            .where(
+                Player.headshot_moderation_status == "PENDING",
+                Player.headshot_url.isnot(None),
+            )
+        )
+        return int(result.scalar_one())
+
     async def count_pending_engagements(self, db: AsyncSession, *, club_ids: list[UUID] | None = None) -> int:
         query = select(func.count()).select_from(PlayerEngagement).where(
             PlayerEngagement.status == EngagementStatus.PENDING

@@ -17,11 +17,12 @@ import type { HeadshotModerationRequest } from '@/types'
 
 export default function AdminHeadshotModerationPage() {
   const { user } = useAuth()
-  const { headshotModerations, reviewHeadshot, pendingHeadshotCount } = usePlayerListings()
+  const { headshotModerations, reviewHeadshot } = usePlayerListings()
   const [rejectTarget, setRejectTarget] = useState<HeadshotModerationRequest | null>(null)
   const [approveTarget, setApproveTarget] = useState<HeadshotModerationRequest | null>(null)
 
   const scoped = filterByLeagueScope(user, headshotModerations)
+  const pendingCount = scoped.filter((h) => h.status === 'PENDING').length
 
   const columns: ColumnDef<HeadshotModerationRequest, unknown>[] = useMemo(
     () => [
@@ -77,9 +78,9 @@ export default function AdminHeadshotModerationPage() {
           </p>
         </div>
 
-        {pendingHeadshotCount > 0 && (
+        {pendingCount > 0 && (
           <Alert className="border-l-4 border-l-kenya-green">
-            <AlertTitle>{pendingHeadshotCount} headshot{pendingHeadshotCount > 1 ? 's' : ''} awaiting review</AlertTitle>
+            <AlertTitle>{pendingCount} headshot{pendingCount > 1 ? 's' : ''} awaiting review</AlertTitle>
             <AlertDescription>Rejected uploads include a message visible to the player.</AlertDescription>
           </Alert>
         )}

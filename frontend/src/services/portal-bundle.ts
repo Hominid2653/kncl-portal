@@ -69,6 +69,8 @@ export interface PortalBundle {
   auditLogs: AuditLogRecord[]
   userProfiles: UserProfileRecord[]
   adminDashboardStats: DashboardStat[]
+  adminPendingTransfers: number
+  adminPendingRegistrations: number
   clubDashboardStats: DashboardStat[]
   playerDashboardStats: DashboardStat[]
   marketingStats: DashboardStat[]
@@ -86,6 +88,8 @@ export const emptyPortalBundle: PortalBundle = {
   auditLogs: [],
   userProfiles: [],
   adminDashboardStats: [],
+  adminPendingTransfers: 0,
+  adminPendingRegistrations: 0,
   clubDashboardStats: [],
   playerDashboardStats: [],
   marketingStats: mockMarketingStats,
@@ -103,6 +107,8 @@ export const mockPortalBundle: PortalBundle = {
   auditLogs: mockAuditLogs,
   userProfiles: mockUserProfiles,
   adminDashboardStats: mockAdminStats,
+  adminPendingTransfers: 0,
+  adminPendingRegistrations: 0,
   clubDashboardStats: mockClubStats,
   playerDashboardStats: mockPlayerStats,
   marketingStats: mockMarketingStats,
@@ -166,6 +172,8 @@ export async function fetchPortalBundle(user: MockUser | null): Promise<PortalBu
   let documents: DocumentRecord[] = []
   let auditLogs: AuditLogRecord[] = []
   let adminDashboardStats: DashboardStat[] = []
+  let adminPendingTransfers = 0
+  let adminPendingRegistrations = 0
   let clubDashboardStats: DashboardStat[] = []
   let playerDashboardStats: DashboardStat[] = []
 
@@ -191,6 +199,10 @@ export async function fetchPortalBundle(user: MockUser | null): Promise<PortalBu
       const admin = await getAdminDashboard()
       if (admin) {
         adminDashboardStats = adminStatsFromTotals(admin.totals)
+        adminPendingTransfers =
+          admin.transfer_counts?.find((item) => item.status === 'PENDING')?.count ?? 0
+        adminPendingRegistrations =
+          admin.pending_by_club?.reduce((sum, club) => sum + club.pending_registrations, 0) ?? 0
         if (admin.recent_activity?.length) {
           auditLogs = admin.recent_activity.map(mapActivityLog)
         }
@@ -230,6 +242,8 @@ export async function fetchPortalBundle(user: MockUser | null): Promise<PortalBu
     auditLogs,
     userProfiles,
     adminDashboardStats,
+    adminPendingTransfers,
+    adminPendingRegistrations,
     clubDashboardStats,
     playerDashboardStats,
     marketingStats: mockMarketingStats,

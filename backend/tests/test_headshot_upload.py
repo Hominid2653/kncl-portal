@@ -53,3 +53,24 @@ def test_patch_headshot_rejects_data_url(
         },
     )
     assert response.status_code == 422
+
+
+def test_list_pending_headshots(
+    client: TestClient,
+    player_headers: dict[str, str],
+    league_coord_headers: dict[str, str],
+    mock_storage: None,
+) -> None:
+    upload = client.post(
+        f"/api/v1/players/{PLAYER_1_ID}/headshot/upload",
+        headers=player_headers,
+        files={"file": ("headshot.png", io.BytesIO(b"\x89PNG\r\n\x1a\n"), "image/png")},
+    )
+    assert upload.status_code == 201
+
+    response = client.get("/api/v1/players/headshots/pending", headers=league_coord_headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total"] >= 1
+    assert any(item["player_id"] == str(PLAYER_1_ID) for item in body["items"])
+    assert body["items"][0]["headshot_url"].startswith("https://signed.example/")

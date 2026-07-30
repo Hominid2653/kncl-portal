@@ -55,6 +55,7 @@ class DashboardService:
                 pending_club_applications=await self.repository.count_pending_club_applications(db),
                 pending_player_applications=await self.repository.count_pending_player_applications(db),
                 pending_engagements=await self.repository.count_pending_engagements(db),
+                pending_headshots=await self.repository.count_pending_headshots(db),
             ),
             transfer_counts=transfer_counts,
             pending_by_club=[

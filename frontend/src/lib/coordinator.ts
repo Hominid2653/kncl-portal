@@ -11,11 +11,12 @@ export function canAccessLeague(user: MockUser | null, leagueId: string): boolea
   return false
 }
 
+/** League-scoped items; federation-wide items have no leagueId and are visible to all coordinators. */
 export function filterByLeagueScope<T extends { leagueId: string }>(user: MockUser | null, items: T[]): T[] {
   if (!user || user.role === 'FEDERATION_ADMIN') return items
   if (user.role === 'LEAGUE_COORDINATOR') {
     const allowed = user.leagueIds ?? [KNCL_LEAGUE_ID]
-    return items.filter((item) => allowed.includes(item.leagueId))
+    return items.filter((item) => !item.leagueId || allowed.includes(item.leagueId))
   }
   return []
 }

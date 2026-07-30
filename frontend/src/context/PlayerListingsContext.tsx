@@ -200,36 +200,20 @@ export function PlayerListingsProvider({ children }: { children: ReactNode }) {
 
 
 
-    if (pendingRes?.items?.length) {
-
+    if (pendingRes?.items) {
       setHeadshotModerations(
-
-        pendingRes.items.map((player) => {
-
-          const listing = listingsRes?.items?.find((l) => l.id === player.id)
-
-          return {
-
-            id: player.id,
-
-            playerId: player.id,
-
-            playerName: listing?.name ?? 'Player',
-
-            leagueId: '',
-
-            proposedUrl: player.headshot_url ?? defaultHeadshotUrl(listing?.name ?? 'Player'),
-
-            status: 'PENDING' as const,
-
-            submittedAt: formatDate(),
-
-          }
-
-        }),
-
+        pendingRes.items.map((item) => ({
+          id: item.player_id,
+          playerId: item.player_id,
+          playerName: item.player_name,
+          leagueId: item.league_id ?? '',
+          proposedUrl: item.headshot_url ?? defaultHeadshotUrl(item.player_name),
+          status: 'PENDING' as const,
+          submittedAt: formatDate(item.headshot_updated_at),
+        })),
       )
-
+    } else if (pendingRes) {
+      setHeadshotModerations([])
     }
 
   }, [authLoading])

@@ -15,7 +15,7 @@ import type { ClubCaptainApplication } from '@/types'
 
 export default function AdminClubApplicationsPage() {
   const { user } = useAuth()
-  const { getScopedClubApplications, getScopedPendingCounts, reviewClubApplication } = useOnboarding()
+  const { getScopedClubApplications, getScopedPendingCounts, reviewClubApplication, applicationsLoading } = useOnboarding()
   const [rejectTarget, setRejectTarget] = useState<ClubCaptainApplication | null>(null)
   const [approveTarget, setApproveTarget] = useState<ClubCaptainApplication | null>(null)
 
@@ -116,7 +116,13 @@ export default function AdminClubApplicationsPage() {
           </Alert>
         )}
 
-        <DataTable columns={columns} data={applications} searchKey="clubName" searchPlaceholder="Search clubs..." />
+        <DataTable
+          columns={columns}
+          data={applications}
+          loading={applicationsLoading}
+          searchKey="clubName"
+          searchPlaceholder="Search clubs..."
+        />
       </div>
 
       <ConfirmDialog

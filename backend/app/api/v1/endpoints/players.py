@@ -24,7 +24,7 @@ from app.schemas.player import (
     PlayerResponse,
     PlayerUpdate
 )
-from app.schemas.headshot import HeadshotModerationUpdate, HeadshotResponse, HeadshotUpdate
+from app.schemas.headshot import HeadshotModerationUpdate, HeadshotResponse, HeadshotUpdate, PendingHeadshotListResponse
 from app.schemas.player_listing import PlayerListingResponse
 from app.services.authorization_service import AuthorizationService
 from app.services.chesscom_service import ChessComService
@@ -88,6 +88,19 @@ async def list_player_listings(
         sort_by=sort_by,
         sort_order=sort_order,
     )
+
+
+@router.get(
+    '/headshots/pending',
+    response_model=PendingHeadshotListResponse,
+    summary='List player headshots awaiting moderation',
+)
+async def list_pending_headshots(
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_league_leadership),
+):
+    items = await headshot_service.list_pending(db)
+    return {"items": items, "total": len(items)}
 
 
 @router.get('/{item_id}', response_model=PlayerResponse, summary='Get Player by id')
