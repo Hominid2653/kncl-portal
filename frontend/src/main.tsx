@@ -44,5 +44,12 @@ createRoot(document.getElementById('root')!).render(
       </PortalDataProvider>
     </AuthProvider>
     </QueryClientProvider>
+import { RouterProvider } from 'react-router-dom'
+import './index.css'
+import router from './routes'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <RouterProvider router={router} />
   </StrictMode>,
 )

@@ -51,6 +51,17 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: #1a2740;
+
+:root {
+  font-family: Inter, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #0f172a;
+  background-color: #f8fafc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -61,6 +72,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: #f8fafc;
 }
 
 #root {

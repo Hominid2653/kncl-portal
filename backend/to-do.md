@@ -68,9 +68,9 @@ Chess.com and Lichess integrations with verification, rating sync, caching, and 
 
 ### 7. Frontend handoff
 
+- [x] Backend handoff docs in `docs/handoff/`
 - [ ] Confirm `docs/endpoints.md` is shared with frontend team
-- [ ] Document Supabase login → Bearer token flow for React/Axios
-- [ ] Provide seeded test users and roles for local integration
+- [ ] Provide seeded test users and roles for local integration (see `docs/handoff/test-users.md`)
 - [ ] Support frontend as endpoints are wired up (issues, contract tweaks)
 
 ---
