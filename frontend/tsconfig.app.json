@@ -27,7 +27,6 @@
     "paths": {
       "@/*": ["./src/*"]
     }
-    "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]
 }

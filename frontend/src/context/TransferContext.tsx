@@ -154,7 +154,7 @@ export function TransferProvider({ children }: { children: ReactNode }) {
           id,
           playerId: engagement.playerId,
           playerName: engagement.playerName,
-          fromClubId: engagement.playerCurrentClubId,
+          fromClubId: engagement.playerCurrentClubId ?? '',
           fromClub: engagement.playerCurrentClubName ?? 'Unknown',
           toClubId: engagement.requestingClubId,
           toClub: engagement.requestingClubName,
@@ -233,7 +233,9 @@ export function TransferProvider({ children }: { children: ReactNode }) {
         const transfer: TransferRecord = {
           id,
           playerName,
+          fromClubId: '',
           fromClub,
+          toClubId: '',
           toClub,
           status: 'PENDING',
           submittedAt: timestamp(),

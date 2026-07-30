@@ -4,10 +4,10 @@ import { DataTable } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { registrationStatusLabels, registrationStatusVariants } from '@/constants/status'
 import { usePortalData } from '@/context/PortalDataContext'
-import type { RegistrationRecord } from '@/types'
+import type { RosterEnrollmentRecord } from '@/types'
 import PortalLayout from '@/layouts/PortalLayout'
 
-const columns: ColumnDef<RegistrationRecord, unknown>[] = [
+const columns: ColumnDef<RosterEnrollmentRecord, unknown>[] = [
   { accessorKey: 'season', header: 'Season' },
   { accessorKey: 'club', header: 'Club' },
   { accessorKey: 'status', header: 'Status', cell: ({ row }) => <Badge variant={registrationStatusVariants[row.original.status]}>{registrationStatusLabels[row.original.status]}</Badge> },

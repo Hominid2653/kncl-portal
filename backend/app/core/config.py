@@ -29,7 +29,6 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_anon_key: str = Field(
         validation_alias=AliasChoices("supabase_anon_key", "SUPABASE_ANON_KEY", "SUPABASE_KEY"),
-        validation_alias=AliasChoices("SUPABASE_ANON_KEY", "SUPABASE_KEY"),
     )
     supabase_service_role_key: str
     supabase_jwt_secret: str = ""
@@ -47,7 +46,6 @@ class Settings(BaseSettings):
     secret_key: str
 
     frontend_url: str = "http://localhost:5173"
-    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     resend_api_key: str = ""
     resend_from_email: str = "KNCL Portal <noreply@kncl.local>"

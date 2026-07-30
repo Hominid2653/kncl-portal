@@ -21,35 +21,28 @@ import '@/index.css'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <PortalDataProvider>
-      <OtpProvider>
-      <SeasonProvider>
-        <PlayerListingsProvider>
-          <OnboardingProvider>
-            <RosterEnrollmentProvider>
-            <TransferProvider>
-              <EngagementProvider>
-              <TooltipProvider>
-                <RouterProvider router={router} />
-                <Toaster position="top-right" richColors closeButton />
-              </TooltipProvider>
-              </EngagementProvider>
-            </TransferProvider>
-            </RosterEnrollmentProvider>
-          </OnboardingProvider>
-        </PlayerListingsProvider>
-      </SeasonProvider>
-      </OtpProvider>
-      </PortalDataProvider>
-    </AuthProvider>
+      <AuthProvider>
+        <PortalDataProvider>
+          <OtpProvider>
+            <SeasonProvider>
+              <PlayerListingsProvider>
+                <OnboardingProvider>
+                  <RosterEnrollmentProvider>
+                    <TransferProvider>
+                      <EngagementProvider>
+                        <TooltipProvider>
+                          <RouterProvider router={router} />
+                          <Toaster position="top-right" richColors closeButton />
+                        </TooltipProvider>
+                      </EngagementProvider>
+                    </TransferProvider>
+                  </RosterEnrollmentProvider>
+                </OnboardingProvider>
+              </PlayerListingsProvider>
+            </SeasonProvider>
+          </OtpProvider>
+        </PortalDataProvider>
+      </AuthProvider>
     </QueryClientProvider>
-import { RouterProvider } from 'react-router-dom'
-import './index.css'
-import router from './routes'
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <RouterProvider router={router} />
   </StrictMode>,
 )
