@@ -14,6 +14,13 @@ export const roleHomeRoutes: Record<UserRole, string> = {
   FEDERATION_ADMIN: '/admin',
 }
 
+export const portalLabels: Record<UserRole, string> = {
+  PLAYER: 'Player portal',
+  CLUB_ADMIN: 'Club portal',
+  LEAGUE_COORDINATOR: 'Admin portal',
+  FEDERATION_ADMIN: 'Admin portal',
+}
+
 export const leagueLeadershipRoles: UserRole[] = ['LEAGUE_COORDINATOR', 'FEDERATION_ADMIN']
 export const clubLeadershipRoles: UserRole[] = ['CLUB_ADMIN', 'LEAGUE_COORDINATOR', 'FEDERATION_ADMIN']
 export const federationAdminRoles: UserRole[] = ['FEDERATION_ADMIN']

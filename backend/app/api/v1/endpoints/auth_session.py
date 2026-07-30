@@ -7,6 +7,7 @@ from app.dependencies.auth import CurrentUser, require_authenticated
 from app.dependencies.dependencies import get_db
 from app.schemas.auth_session import (
     AuthSessionResponse,
+    PasswordChange,
     PasswordResetConfirm,
     PasswordResetRequest,
 )
@@ -49,4 +50,21 @@ async def confirm_password_reset(
     if not token:
         raise Unauthorized("Recovery token is required.")
     await supabase_auth.update_password_with_token(token, payload.password)
+    return Response(status_code=204)
+
+
+@router.post(
+    "/password/change",
+    status_code=204,
+    summary="Change password for the signed-in user",
+)
+async def change_password(
+    payload: PasswordChange,
+    current_user: CurrentUser = Depends(require_authenticated),
+) -> Response:
+    await supabase_auth.change_password(
+        current_user.email,
+        payload.current_password,
+        payload.new_password,
+    )
     return Response(status_code=204)

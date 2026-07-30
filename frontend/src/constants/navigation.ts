@@ -7,6 +7,7 @@ import {
   FileText,
   Handshake,
   ImageIcon,
+  KeyRound,
   LayoutDashboard,
   ScrollText,
   Shield,
@@ -75,16 +76,20 @@ export const federationOnlyNav: NavItem[] = [
   { title: 'Notifications', href: '/admin/notifications', icon: Bell },
 ]
 
+const accountNav: NavItem[] = [
+  { title: 'Security', href: '/account/security', icon: KeyRound },
+]
+
 export function getNavForRole(role: UserRole): NavItem[] {
   switch (role) {
     case 'PLAYER':
-      return playerNav
+      return [...playerNav, ...accountNav]
     case 'CLUB_ADMIN':
-      return clubNav
+      return [...clubNav, ...accountNav]
     case 'LEAGUE_COORDINATOR':
-      return coordinatorNav
+      return [...coordinatorNav, ...accountNav]
     case 'FEDERATION_ADMIN':
-      return [...coordinatorNav, ...federationOnlyNav]
+      return [...coordinatorNav, ...federationOnlyNav, ...accountNav]
     default:
       return []
   }

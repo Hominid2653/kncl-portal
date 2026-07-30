@@ -78,6 +78,17 @@ export async function confirmPasswordReset(password: string, recoveryToken: stri
   })
 }
 
+export async function changePassword(currentPassword: string, newPassword: string) {
+  if (!USE_API) return null
+  return apiRequest<void>('/auth/password/change', {
+    method: 'POST',
+    body: {
+      current_password: currentPassword,
+      new_password: newPassword,
+    },
+  })
+}
+
 export async function requestOtp(email: string, purpose: 'APPLICATION_SUBMIT' | 'STATUS_LOOKUP') {
   if (!USE_API) return null
   return apiRequest<void>('/auth/otp/request', {

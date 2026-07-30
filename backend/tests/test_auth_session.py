@@ -53,3 +53,43 @@ def test_password_reset_confirm_requires_token(client: TestClient) -> None:
         json={"password": "new-password-123"},
     )
     assert response.status_code == 401
+
+
+def test_password_change_returns_204(
+    client: TestClient,
+    player_headers: dict[str, str],
+) -> None:
+    with patch(
+        "app.api.v1.endpoints.auth_session.SupabaseAuthService.change_password",
+        new_callable=AsyncMock,
+    ) as mock_change:
+        response = client.post(
+            "/api/v1/auth/password/change",
+            headers=player_headers,
+            json={
+                "current_password": "old-password-123",
+                "new_password": "new-password-456",
+            },
+        )
+
+    assert response.status_code == 204
+    mock_change.assert_awaited_once_with(
+        player_headers["X-Mock-Email"],
+        "old-password-123",
+        "new-password-456",
+    )
+
+
+def test_password_change_rejects_matching_passwords(
+    client: TestClient,
+    player_headers: dict[str, str],
+) -> None:
+    response = client.post(
+        "/api/v1/auth/password/change",
+        headers=player_headers,
+        json={
+            "current_password": "same-password",
+            "new_password": "same-password",
+        },
+    )
+    assert response.status_code == 422

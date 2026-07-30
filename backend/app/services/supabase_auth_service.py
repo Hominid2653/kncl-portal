@@ -75,3 +75,7 @@ class SupabaseAuthService:
                 "Unable to update password.",
             )
             raise ValidationError(str(detail))
+
+    async def change_password(self, email: str, current_password: str, new_password: str) -> None:
+        token = await self.login_with_password(email, current_password)
+        await self.update_password_with_token(token, new_password)

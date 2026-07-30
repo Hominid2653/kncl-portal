@@ -43,6 +43,7 @@ import AdminNotificationsPage from '@/pages/admin/AdminNotificationsPage'
 import AdminClubApplicationsPage from '@/pages/admin/AdminClubApplicationsPage'
 import AdminPlayerApplicationsPage from '@/pages/admin/AdminPlayerApplicationsPage'
 import AdminHeadshotModerationPage from '@/pages/admin/AdminHeadshotModerationPage'
+import ChangePasswordPage from '@/pages/account/ChangePasswordPage'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { FederationOnlyRoute } from '@/routes/FederationOnlyRoute'
 
@@ -63,6 +64,13 @@ const router = createBrowserRouter([
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
   { path: '/unauthorized', element: <UnauthorizedPage /> },
+
+  {
+    element: (
+      <ProtectedRoute allowedRoles={['PLAYER', 'CLUB_ADMIN', 'LEAGUE_COORDINATOR', 'FEDERATION_ADMIN']} />
+    ),
+    children: [{ path: '/account/security', element: <ChangePasswordPage /> }],
+  },
 
   {
     element: <ProtectedRoute allowedRoles={['PLAYER']} />,
