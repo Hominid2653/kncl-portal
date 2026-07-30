@@ -26,20 +26,6 @@ app.add_middleware(
 
 register_exception_handlers(app)
 
-_cors_origins = [
-    origin.strip()
-    for origin in settings.cors_origins.split(",")
-    if origin.strip()
-]
-if _cors_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=_cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
 
 @app.middleware("http")
 async def add_request_id(request, call_next):

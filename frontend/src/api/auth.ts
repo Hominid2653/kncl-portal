@@ -1,4 +1,5 @@
-import { apiRequest, API_BASE } from '@/api/client'
+import { apiRequest } from '@/api/client'
+import { apiUrl } from '@/lib/api-base'
 import { setAccessToken, USE_API } from '@/lib/api-config'
 import type { MockUser, UserRole } from '@/types'
 
@@ -32,7 +33,7 @@ export async function loginWithPassword(email: string, password: string) {
   if (!USE_API) return null
 
   const body = new URLSearchParams({ username: email, password })
-  const response = await fetch(`${API_BASE}/auth/token`, {
+  const response = await fetch(apiUrl('/auth/token'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,

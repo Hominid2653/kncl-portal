@@ -4,8 +4,9 @@
  */
 
 import { getApiAuthHeaders } from '@/lib/api-config'
+import { apiUrl, getApiBase } from '@/lib/api-base'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'
+const API_BASE = getApiBase()
 
 export class ApiError extends Error {
   status: number
@@ -45,7 +46,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers.Authorization = `Bearer ${emailVerificationToken}`
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(apiUrl(path), {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,

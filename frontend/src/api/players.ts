@@ -1,4 +1,5 @@
-import { apiRequest, API_BASE } from '@/api/client'
+import { apiRequest } from '@/api/client'
+import { apiUrl } from '@/lib/api-base'
 import { getApiAuthHeaders, USE_API } from '@/lib/api-config'
 
 export interface HeadshotApiResponse {
@@ -21,7 +22,7 @@ export async function uploadPlayerHeadshot(playerId: string, file: File) {
   if (!USE_API) return null
   const formData = new FormData()
   formData.append('file', file)
-  const response = await fetch(`${API_BASE}/players/${playerId}/headshot/upload`, {
+  const response = await fetch(apiUrl(`/players/${playerId}/headshot/upload`), {
     method: 'POST',
     headers: getApiAuthHeaders(),
     body: formData,
