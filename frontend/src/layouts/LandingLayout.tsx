@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MenuIcon } from 'lucide-react'
 
+import MarketingImageBackdrop from '@/components/marketing/MarketingImageBackdrop'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
@@ -12,15 +13,25 @@ interface LandingLayoutProps {
   children: ReactNode
 }
 
+const footerLinks = [
+  { label: 'About', href: '/about' },
+  { label: 'Register', href: '/register' },
+  { label: 'Players', href: '/players' },
+  { label: 'Application status', href: '/register/status' },
+  { label: 'Sign in', href: '/login' },
+]
+
 export default function LandingLayout({ children }: LandingLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-header text-header-foreground">
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="shrink-0 bg-header text-header-foreground">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <Link to="/" className="space-y-0.5">
-            <p className="text-[10px] font-semibold tracking-[0.35em] text-white/60 uppercase">Kenya National Chess League</p>
+            <p className="text-[10px] font-semibold tracking-[0.35em] text-white/60 uppercase">
+              Kenya National Chess League
+            </p>
             <p className="text-sm font-medium">Transfer Portal</p>
           </Link>
 
@@ -38,10 +49,17 @@ export default function LandingLayout({ children }: LandingLayoutProps) {
 
           <div className="flex items-center gap-2">
             <div className="hidden items-center gap-2 sm:flex">
-              <Button variant="ghost" className="text-white/80 hover:bg-white/10 hover:text-white" render={<Link to="/login" />}>
+              <Button
+                variant="ghost"
+                className="text-white/80 hover:bg-white/10 hover:text-white"
+                render={<Link to="/login" />}
+              >
                 Sign in
               </Button>
-              <Button className="border-kenya-green bg-kenya-green text-white hover:bg-kenya-green/90" render={<Link to="/login" />}>
+              <Button
+                className="border-kenya-green bg-kenya-green text-white hover:bg-kenya-green/90"
+                render={<Link to="/login" />}
+              >
                 Portal
               </Button>
             </div>
@@ -90,7 +108,10 @@ export default function LandingLayout({ children }: LandingLayoutProps) {
                   >
                     Sign in
                   </Link>
-                  <Button className="mt-2 w-full" render={<Link to="/login" onClick={() => setMobileOpen(false)} />}>
+                  <Button
+                    className="mt-2 w-full"
+                    render={<Link to="/login" onClick={() => setMobileOpen(false)} />}
+                  >
                     Portal
                   </Button>
                 </nav>
@@ -100,11 +121,34 @@ export default function LandingLayout({ children }: LandingLayoutProps) {
         </div>
         <Separator className="bg-white/10" />
       </header>
-      <main>{children}</main>
-      <footer className="border-t bg-header text-white/60">
-        <div className="mx-auto max-w-7xl px-4 py-8 text-sm sm:px-6">
-          © Kenya National Chess League · Registration &amp; Transfer Management
-        </div>
+
+      <main className="flex-1">{children}</main>
+
+      <footer className="mt-auto shrink-0 border-t border-white/10 text-header-foreground">
+        <MarketingImageBackdrop variant="footer" imagePosition="center 60%">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.4fr_1fr]">
+            <div className="space-y-3">
+              <p className="text-[10px] font-semibold tracking-[0.35em] text-white/50 uppercase">
+                Kenya National Chess League
+              </p>
+              <p className="max-w-md text-sm leading-6 text-white/70">
+                Official registration, club affiliation, and transfer management for Kenya&apos;s national chess league.
+              </p>
+            </div>
+            <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/70">
+              {footerLinks.map((link) => (
+                <Link key={link.href} to={link.href} className="transition-colors hover:text-white">
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="border-t border-white/10">
+            <div className="mx-auto max-w-7xl px-4 py-4 text-xs text-white/45 sm:px-6">
+              © {new Date().getFullYear()} Kenya National Chess League · Registration &amp; Transfer Management
+            </div>
+          </div>
+        </MarketingImageBackdrop>
       </footer>
     </div>
   )

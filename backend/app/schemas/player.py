@@ -33,6 +33,14 @@ class PlayerUpdate(BaseModel):
     profile_photo: str | None = None
 
 
+class PlayerExternalAccountUpdate(BaseModel):
+    """Player self-service or club-admin linking of external platform accounts."""
+
+    fide_id: str | None = Field(default=None, max_length=50)
+    lichess_username: str | None = Field(default=None, max_length=100)
+    chesscom_username: str | None = Field(default=None, max_length=100)
+
+
 class PlayerResponse(TimestampSchema):
     user_profile_id: UUID
     federation_id: str | None = None

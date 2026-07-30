@@ -6,6 +6,7 @@ import { z } from 'zod'
 
 import { fetchApplicationStatus } from '@/api/application-status'
 import { EmailOtpVerification } from '@/components/email-otp-verification'
+import MarketingPageShell from '@/components/marketing/MarketingPageShell'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -109,17 +110,14 @@ export default function ApplicationStatusPage() {
   }, [searchParams, form])
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 px-4 py-12 sm:px-6">
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold tracking-[0.35em] text-muted-foreground uppercase">Application tracker</p>
-        <h1 className="text-3xl font-semibold tracking-tight">Check application status</h1>
-        <p className="text-muted-foreground">
-          Verify your email to view application status. Once approved, sign in with the email and password from your welcome email.
-        </p>
-      </div>
-
+    <MarketingPageShell
+      eyebrow="Application tracker"
+      title="Check application status"
+      description="Verify your email to view application status. Once approved, sign in with the email and password from your welcome email."
+      width="3xl"
+    >
       {step === 'email' && (
-        <Card>
+        <Card className="border-border/80 shadow-sm">
           <CardHeader>
             <CardTitle>Look up application</CardTitle>
             <CardDescription>We&apos;ll send a verification code before showing your status.</CardDescription>
@@ -142,7 +140,7 @@ export default function ApplicationStatusPage() {
       )}
 
       {step === 'verify' && (
-        <Card>
+        <Card className="border-border/80 shadow-sm">
           <CardHeader>
             <CardTitle>Verify your email</CardTitle>
             <CardDescription>Enter the code sent to {pendingEmail}</CardDescription>
@@ -163,9 +161,9 @@ export default function ApplicationStatusPage() {
 
       {step === 'results' && verifiedEmail && (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/80 bg-muted/30 px-4 py-3">
             <p className="text-sm text-muted-foreground">
-              Showing results for <strong>{verifiedEmail}</strong>
+              Showing results for <strong className="text-foreground">{verifiedEmail}</strong>
             </p>
             <Button type="button" variant="outline" size="sm" onClick={resetLookup}>
               Look up another email
@@ -180,7 +178,7 @@ export default function ApplicationStatusPage() {
 
             <TabsContent value="player">
               {playerApp ? (
-                <Card>
+                <Card className="border-border/80 shadow-sm">
                   <CardHeader>
                     <div className="flex items-center justify-between gap-2">
                       <CardTitle>{playerApp.firstName} {playerApp.lastName}</CardTitle>
@@ -192,7 +190,7 @@ export default function ApplicationStatusPage() {
                   </CardHeader>
                   <CardContent className="space-y-4 text-sm">
                     {playerApp.status === 'APPROVED' && (
-                      <Alert className="border-l-4 border-l-kenya-green">
+                      <Alert className="border-l-4 border-l-kenya-green bg-kenya-green/5">
                         <AlertTitle>Approved — you can sign in</AlertTitle>
                         <AlertDescription>
                           Use your email at the login page. Check your inbox for a welcome email with your temporary password.
@@ -221,7 +219,7 @@ export default function ApplicationStatusPage() {
 
             <TabsContent value="club">
               {clubApp ? (
-                <Card>
+                <Card className="border-border/80 shadow-sm">
                   <CardHeader>
                     <div className="flex items-center justify-between gap-2">
                       <CardTitle>{clubApp.clubName}</CardTitle>
@@ -236,7 +234,7 @@ export default function ApplicationStatusPage() {
                   </CardHeader>
                   <CardContent className="space-y-4 text-sm">
                     {clubApp.status === 'APPROVED' && (
-                      <Alert className="border-l-4 border-l-kenya-green">
+                      <Alert className="border-l-4 border-l-kenya-green bg-kenya-green/5">
                         <AlertTitle>Approved — captain account ready</AlertTitle>
                         <AlertDescription>
                           Sign in with <strong>{clubApp.captainEmail}</strong>. Check your welcome email for your temporary password.
@@ -265,6 +263,6 @@ export default function ApplicationStatusPage() {
           </Tabs>
         </>
       )}
-    </div>
+    </MarketingPageShell>
   )
 }

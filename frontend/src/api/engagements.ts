@@ -62,7 +62,11 @@ interface PlayerListingApiItem {
   commitment_status: 'FREE_AGENT' | 'COMMITTED'
   club?: { id: string; name: string } | null
   county?: string | null
+  fide_id?: string | null
   fide_rating?: number | null
+  blitz_rating?: number | null
+  rapid_rating?: number | null
+  classical_rating?: number | null
   lichess_username?: string | null
   chesscom_username?: string | null
   lichess_verified?: boolean

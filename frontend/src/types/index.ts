@@ -19,6 +19,10 @@ export interface PlayerListingRecord {
   clubId?: string
   county: string
   fideRating?: number
+  classicalRating?: number
+  rapidRating?: number
+  blitzRating?: number
+  fideId?: string
   lichessUsername?: string
   chesscomUsername?: string
   lichessVerified: boolean
@@ -71,6 +75,10 @@ export interface PlayerRecord {
   club: string
   clubId: string
   fideRating?: number
+  classicalRating?: number
+  rapidRating?: number
+  blitzRating?: number
+  fideId?: string
   lichessUsername?: string
   chesscomUsername?: string
   lichessVerified: boolean

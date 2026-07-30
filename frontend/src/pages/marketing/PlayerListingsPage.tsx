@@ -5,6 +5,8 @@ import { HandshakeIcon, LayoutGridIcon, SearchIcon, TableIcon } from 'lucide-rea
 import { toast } from 'sonner'
 
 import { DataTable } from '@/components/data-table'
+import PlayerRatingsBadges from '@/components/player-ratings'
+import MarketingPageShell from '@/components/marketing/MarketingPageShell'
 import PlayerListingGrid from '@/components/player-listing-grid'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -96,7 +98,21 @@ export default function PlayerListingsPage() {
       },
       { accessorKey: 'federationId', header: 'Federation ID' },
       { accessorKey: 'county', header: 'County' },
-      { accessorKey: 'fideRating', header: 'Rating' },
+      {
+        id: 'ratings',
+        header: 'Ratings',
+        cell: ({ row }) => (
+          <PlayerRatingsBadges
+            ratings={{
+              classicalRating: row.original.classicalRating ?? row.original.fideRating,
+              rapidRating: row.original.rapidRating,
+              blitzRating: row.original.blitzRating,
+              fideId: row.original.fideId,
+            }}
+            size="sm"
+          />
+        ),
+      },
       {
         id: 'status',
         header: 'Status',
@@ -125,14 +141,20 @@ export default function PlayerListingsPage() {
   const filteredCommitted = filterList(committed)
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-12 sm:px-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="max-w-3xl space-y-3">
-          <p className="text-[10px] font-semibold tracking-[0.35em] text-muted-foreground uppercase">Player marketplace</p>
-          <h1 className="text-3xl font-semibold tracking-tight">Player listings</h1>
-          <p className="text-muted-foreground">
-            Browse free agents and committed players. Grid view shows player headshots from their portal profiles.
-          </p>
+    <MarketingPageShell
+      eyebrow="Player marketplace"
+      title="Player listings"
+      description="Browse free agents and committed players. Grid view shows player headshots from their portal profiles."
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative max-w-md flex-1">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Search by name, county, or federation ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
         <div className="flex gap-2">
           <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>
@@ -146,22 +168,12 @@ export default function PlayerListingsPage() {
         </div>
       </div>
 
-      <Alert className="border-l-4 border-l-kenya-green">
+      <Alert className="border-l-4 border-l-kenya-green bg-kenya-green/5">
         <AlertTitle>How engagement works</AlertTitle>
         <AlertDescription>
           Free agents receive your interest directly in their player portal. For committed players, the request is sent to their current club captain.
         </AlertDescription>
       </Alert>
-
-      <div className="relative max-w-md">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          className="pl-9"
-          placeholder="Search by name, county, or federation ID..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
 
       <Tabs defaultValue="free-agents">
         <TabsList>
@@ -170,7 +182,7 @@ export default function PlayerListingsPage() {
         </TabsList>
 
         <TabsContent value="free-agents" className="space-y-4">
-          <Card>
+          <Card className="border-border/80 shadow-sm">
             <CardHeader>
               <CardTitle>Available players</CardTitle>
               <CardDescription>Players not currently committed to any KNCL club.</CardDescription>
@@ -186,7 +198,7 @@ export default function PlayerListingsPage() {
         </TabsContent>
 
         <TabsContent value="committed" className="space-y-4">
-          <Card>
+          <Card className="border-border/80 shadow-sm">
             <CardHeader>
               <CardTitle>Committed players</CardTitle>
               <CardDescription>Players affiliated with a club. Interest is routed to their club captain.</CardDescription>
@@ -203,7 +215,7 @@ export default function PlayerListingsPage() {
       </Tabs>
 
       {!isAuthenticated && (
-        <Card className="border-dashed">
+        <Card className="border-dashed border-border/80 bg-muted/20">
           <CardContent className="flex flex-col items-start gap-3 py-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium">Club captain?</p>
@@ -240,6 +252,6 @@ export default function PlayerListingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </MarketingPageShell>
   )
 }

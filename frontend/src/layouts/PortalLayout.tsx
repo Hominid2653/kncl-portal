@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { LogOutIcon } from 'lucide-react'
+import type { ReactNode } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { LogOutIcon } from "lucide-react";
 
-import { DevRoleSwitcher } from '@/components/DevRoleSwitcher'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { DevRoleSwitcher } from "@/components/DevRoleSwitcher";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,8 +11,8 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import { Separator } from '@/components/ui/separator'
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
   SidebarContent,
@@ -27,33 +27,42 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from '@/components/ui/sidebar'
-import { roleLabels } from '@/constants/roles'
-import { getNavForRole } from '@/constants/navigation'
-import { useAuth } from '@/context/AuthContext'
-import { usePortalData } from '@/context/PortalDataContext'
+} from "@/components/ui/sidebar";
+import { roleLabels } from "@/constants/roles";
+import { getNavForRole } from "@/constants/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { usePortalData } from "@/context/PortalDataContext";
 
 interface PortalLayoutProps {
-  children: ReactNode
-  portalLabel: string
+  children: ReactNode;
+  portalLabel: string;
 }
 
-export default function PortalLayout({ children, portalLabel }: PortalLayoutProps) {
-  const { user, logout } = useAuth()
-  const { isRefreshing } = usePortalData()
-  const location = useLocation()
-  const navItems = user ? getNavForRole(user.role) : []
-  const initials = user ? `${user.firstName[0]}${user.lastName[0]}` : 'KN'
+export default function PortalLayout({
+  children,
+  portalLabel,
+}: PortalLayoutProps) {
+  const { user, logout } = useAuth();
+  const { isRefreshing } = usePortalData();
+  const location = useLocation();
+  const navItems = user ? getNavForRole(user.role) : [];
+  const initials = user ? `${user.firstName[0]}${user.lastName[0]}` : "KN";
 
-  const currentPage = navItems.find((item) => location.pathname === item.href)?.title ?? portalLabel
+  const currentPage =
+    navItems.find((item) => location.pathname === item.href)?.title ??
+    portalLabel;
 
   return (
     <SidebarProvider>
       <Sidebar className="border-sidebar-border bg-sidebar text-sidebar-foreground">
         <SidebarHeader className="border-b border-white/10 p-4">
-          <p className="text-[10px] font-semibold tracking-[0.35em] text-white/50 uppercase">KNCL</p>
+          <p className="text-[10px] font-semibold tracking-[0.35em] text-white/50 uppercase">
+            KNCL
+          </p>
           <p className="text-sm font-medium text-white">{portalLabel}</p>
-          {user && <p className="text-xs text-white/60">{roleLabels[user.role]}</p>}
+          {user && (
+            <p className="text-xs text-white/60">{roleLabels[user.role]}</p>
+          )}
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -97,7 +106,9 @@ export default function PortalLayout({ children, portalLabel }: PortalLayoutProp
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink render={<Link to={navItems[0]?.href ?? '/'} />}>{portalLabel}</BreadcrumbLink>
+                <BreadcrumbLink render={<Link to={navItems[0]?.href ?? "/"} />}>
+                  {portalLabel}
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -119,9 +130,11 @@ export default function PortalLayout({ children, portalLabel }: PortalLayoutProp
             </Avatar>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 bg-muted/20 p-4 md:p-6">{children}</div>
+        <div className="flex flex-1 flex-col gap-4 bg-muted/20 p-4 md:p-6">
+          {children}
+        </div>
       </SidebarInset>
       <DevRoleSwitcher />
     </SidebarProvider>
-  )
+  );
 }

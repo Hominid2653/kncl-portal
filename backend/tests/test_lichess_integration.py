@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.core.exceptions import ResourceNotFound, ValidationError
 from app.integrations.chesscom_client import ChessComClient
-from app.integrations.external_cache import clear_external_cache
+from app.integrations.external_cache import clear_external_cache, set_cached_payload
 from app.integrations.lichess_client import LichessClient
 from app.seed.data import PLAYER_1_ID
 from app.services.chesscom_service import ChessComService
@@ -58,7 +58,7 @@ def clear_cache() -> None:
 
 @pytest.fixture
 def mock_lichess_client(monkeypatch: pytest.MonkeyPatch) -> None:
-    async def fake_get_user(self, username: str) -> dict:
+    async def fake_get_user(self, username: str, *, skip_cache: bool = False) -> dict:
         normalized = self.normalize_username(username)
         if normalized.lower() == "missing_user":
             raise ResourceNotFound(f"Lichess user '{normalized}' not found.")
@@ -196,7 +196,7 @@ def test_request_and_confirm_lichess_verification(
     assert request.status_code == 200
     code = request.json()["verification_code"]
 
-    async def fake_get_user_with_code(self, username: str) -> dict:
+    async def fake_get_user_with_code(self, username: str, *, skip_cache: bool = False) -> dict:
         payload = dict(MOCK_LICHESS_USER)
         payload["username"] = username
         payload["profile"] = {**MOCK_LICHESS_USER["profile"], "bio": f"Player {code}"}
@@ -213,6 +213,47 @@ def test_request_and_confirm_lichess_verification(
     assert confirm.json()["method"] == "bio_code"
 
 
+def test_confirm_lichess_verification_bypasses_stale_profile_cache(
+    client: TestClient,
+    player_headers: dict[str, str],
+    mock_lichess_client: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    request = client.get(
+        f"/api/v1/players/{PLAYER_1_ID}/lichess/verify",
+        headers=player_headers,
+    )
+    assert request.status_code == 200
+    code = request.json()["verification_code"]
+
+    set_cached_payload(
+        "lichess:user:elias_mwangi",
+        {
+            **MOCK_LICHESS_USER,
+            "profile": {**MOCK_LICHESS_USER["profile"], "bio": "Old bio without verification code"},
+        },
+    )
+
+    async def fake_get_user_with_code(self, username: str, *, skip_cache: bool = False) -> dict:
+        if skip_cache:
+            payload = dict(MOCK_LICHESS_USER)
+            payload["username"] = username
+            payload["profile"] = {**MOCK_LICHESS_USER["profile"], "bio": f"Player {code}"}
+            return payload
+        cached = dict(MOCK_LICHESS_USER)
+        cached["profile"] = {**MOCK_LICHESS_USER["profile"], "bio": "Old bio without verification code"}
+        return cached
+
+    monkeypatch.setattr(LichessClient, "get_user", fake_get_user_with_code)
+
+    confirm = client.post(
+        f"/api/v1/players/{PLAYER_1_ID}/lichess/verify",
+        headers=player_headers,
+    )
+    assert confirm.status_code == 200
+    assert confirm.json()["verified"] is True
+
+
 def test_admin_verify_lichess(
     client: TestClient,
     admin_headers: dict[str, str],
@@ -225,6 +266,24 @@ def test_admin_verify_lichess(
 
     assert response.status_code == 200
     assert response.json()["method"] == "admin_attestation"
+
+
+def test_player_can_link_lichess_via_external_accounts(
+    client: TestClient,
+    player_headers: dict[str, str],
+    mock_lichess_client: None,
+) -> None:
+    response = client.patch(
+        f"/api/v1/players/{PLAYER_1_ID}/external-accounts",
+        headers=player_headers,
+        params={"sync_lichess": "true"},
+        json={"lichess_username": "elias_mwangi"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["lichess_username"] == "elias_mwangi"
+    assert body["blitz_rating"] == 1650
 
 
 def test_patch_rejects_invalid_lichess_username(

@@ -1,5 +1,6 @@
 import { HandshakeIcon } from 'lucide-react'
 
+import PlayerRatingsBadges from '@/components/player-ratings'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -48,11 +49,20 @@ export default function PlayerListingGrid({ players, onExpressInterest, showActi
                 <p className="text-xs text-muted-foreground">{player.federationId}</p>
               </div>
             </CardHeader>
-            <CardContent className="space-y-2 text-center text-sm">
+            <CardContent className="space-y-3 text-center text-sm">
               <div className="flex flex-wrap justify-center gap-1">
                 {commitmentBadge(player.commitmentStatus)}
-                {player.fideRating && <Badge variant="outline">{player.fideRating}</Badge>}
               </div>
+              <PlayerRatingsBadges
+                ratings={{
+                  classicalRating: player.classicalRating ?? player.fideRating,
+                  rapidRating: player.rapidRating,
+                  blitzRating: player.blitzRating,
+                  fideId: player.fideId,
+                }}
+                size="sm"
+                className="justify-center"
+              />
               <p className="text-muted-foreground">{player.county}</p>
               {player.club && <p className="text-xs text-muted-foreground">{player.club}</p>}
             </CardContent>

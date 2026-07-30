@@ -70,6 +70,33 @@ export async function listPlayersPendingHeadshots() {
   }>('/players/headshots/pending')
 }
 
+export async function updatePlayerExternalAccounts(
+  playerId: string,
+  payload: { fide_id?: string | null; lichess_username?: string | null; chesscom_username?: string | null },
+  options?: { syncFide?: boolean; syncLichess?: boolean; syncChesscom?: boolean },
+) {
+  if (!USE_API) return null
+  const params = new URLSearchParams()
+  if (options?.syncFide) params.set('sync_fide', 'true')
+  if (options?.syncLichess) params.set('sync_lichess', 'true')
+  if (options?.syncChesscom) params.set('sync_chesscom', 'true')
+  const query = params.toString()
+  return apiRequest(`/players/${playerId}/external-accounts${query ? `?${query}` : ''}`, {
+    method: 'PATCH',
+    body: payload,
+  })
+}
+
+export async function syncPlayerRatings(playerId: string) {
+  if (!USE_API) return null
+  return apiRequest(`/players/${playerId}/ratings/sync`, { method: 'POST' })
+}
+
+export async function syncFideRatings(playerId: string) {
+  if (!USE_API) return null
+  return apiRequest(`/players/${playerId}/fide/sync`, { method: 'POST' })
+}
+
 export async function syncLichessRatings(playerId: string) {
   if (!USE_API) return null
   return apiRequest(`/players/${playerId}/lichess/sync`, { method: 'POST' })
@@ -77,14 +104,12 @@ export async function syncLichessRatings(playerId: string) {
 
 export async function requestLichessVerification(playerId: string) {
   if (!USE_API) return null
-  return apiRequest<VerificationCodeApiResponse>(`/players/${playerId}/lichess/verify`, {
-    method: 'POST',
-  })
+  return apiRequest<VerificationCodeApiResponse>(`/players/${playerId}/lichess/verify`)
 }
 
 export async function confirmLichessVerification(playerId: string) {
   if (!USE_API) return null
-  return apiRequest(`/players/${playerId}/lichess/verify`, { method: 'PATCH' })
+  return apiRequest(`/players/${playerId}/lichess/verify`, { method: 'POST' })
 }
 
 export async function syncChesscomRatings(playerId: string) {
@@ -94,12 +119,10 @@ export async function syncChesscomRatings(playerId: string) {
 
 export async function requestChesscomVerification(playerId: string) {
   if (!USE_API) return null
-  return apiRequest<VerificationCodeApiResponse>(`/players/${playerId}/chesscom/verify`, {
-    method: 'POST',
-  })
+  return apiRequest<VerificationCodeApiResponse>(`/players/${playerId}/chesscom/verify`)
 }
 
 export async function confirmChesscomVerification(playerId: string) {
   if (!USE_API) return null
-  return apiRequest(`/players/${playerId}/chesscom/verify`, { method: 'PATCH' })
+  return apiRequest(`/players/${playerId}/chesscom/verify`, { method: 'POST' })
 }

@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
 import { EmailOtpVerification } from '@/components/email-otp-verification'
+import MarketingPageShell from '@/components/marketing/MarketingPageShell'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -62,24 +63,21 @@ export default function PlayerRegistrationPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-12 sm:px-6">
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold tracking-[0.35em] text-muted-foreground uppercase">Player onboarding</p>
-        <h1 className="text-3xl font-semibold tracking-tight">Create your player profile</h1>
-        <p className="text-muted-foreground">
-          Register as a free agent. A league coordinator must approve your details before you appear in listings.
-        </p>
-      </div>
-
-      <Alert className="border-l-4 border-l-kenya-green">
+    <MarketingPageShell
+      eyebrow="Player onboarding"
+      title="Create your player profile"
+      description="Register as a free agent. A league coordinator must approve your details before you appear in listings."
+      width="3xl"
+    >
+      <Alert className="border-l-4 border-l-kenya-green bg-kenya-green/5">
         <AlertTitle>Email verification &amp; coordinator approval</AlertTitle>
-        <AlertDescription>
+        <AlertDescription className="leading-6">
           Verify your email before submitting. If rejected, you will receive a message explaining what to correct before reapplying.
         </AlertDescription>
       </Alert>
 
       {step === 'form' ? (
-        <Card>
+        <Card className="border-border/80 shadow-sm">
           <CardHeader>
             <CardTitle>Player profile request</CardTitle>
             <CardDescription>Federation ID is assigned on approval.</CardDescription>
@@ -116,7 +114,7 @@ export default function PlayerRegistrationPage() {
                 <FormField control={form.control} name="nationality" render={({ field }) => (
                   <FormItem><FormLabel>Nationality</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                <div className="flex flex-wrap gap-3 md:col-span-2">
+                <div className="flex flex-wrap gap-3 border-t border-border/60 pt-4 md:col-span-2">
                   <Button type="submit">Continue to email verification</Button>
                   <Button variant="outline" render={<Link to="/players" />}>Browse player listings</Button>
                 </div>
@@ -125,7 +123,7 @@ export default function PlayerRegistrationPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="border-border/80 shadow-sm">
           <CardHeader>
             <CardTitle>Verify your email</CardTitle>
             <CardDescription>Confirm ownership of {pendingData?.email} before we submit your profile request.</CardDescription>
@@ -145,6 +143,6 @@ export default function PlayerRegistrationPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </MarketingPageShell>
   )
 }

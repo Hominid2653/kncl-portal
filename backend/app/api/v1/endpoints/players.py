@@ -20,6 +20,7 @@ from app.schemas.external_accounts import (
 )
 from app.schemas.player import (
     PlayerCreate,
+    PlayerExternalAccountUpdate,
     PlayerListResponse,
     PlayerResponse,
     PlayerUpdate
@@ -31,6 +32,8 @@ from app.services.chesscom_service import ChessComService
 from app.services.engagement_service import PlayerListingService
 from app.services.headshot_service import HeadshotService
 from app.services.lichess_service import LichessService
+from app.services.fide_service import FideService
+from app.services.rating_sync_service import RatingSyncService
 from app.services.player_service import PlayerService
 
 router = APIRouter(prefix='/players', tags=['Players'])
@@ -38,6 +41,8 @@ service = PlayerService()
 listing_service = PlayerListingService()
 lichess_service = LichessService()
 chesscom_service = ChessComService()
+fide_service = FideService()
+rating_sync_service = RatingSyncService()
 authz = AuthorizationService()
 headshot_service = HeadshotService()
 
@@ -327,6 +332,58 @@ async def moderate_player_headshot(
         moderation_status=payload.headshot_moderation_status,
     )
     return await headshot_service.to_response(updated)
+
+
+@router.post('/{item_id}/fide/sync', response_model=PlayerResponse, summary='Sync player ratings from FIDE')
+async def sync_player_fide_ratings(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    player = await service.get(db, item_id)
+    await authz.ensure_can_manage_player_external_account(db, current_user, player)
+    return await fide_service.sync_player_ratings(db, item_id)
+
+
+@router.post('/{item_id}/ratings/sync', response_model=PlayerResponse, summary='Sync ratings from best linked source')
+async def sync_player_ratings(
+    item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    player = await service.get(db, item_id)
+    await authz.ensure_can_manage_player_external_account(db, current_user, player)
+    updated, _source = await rating_sync_service.sync_best_available(db, item_id)
+    return updated
+
+
+@router.patch(
+    '/{item_id}/external-accounts',
+    response_model=PlayerResponse,
+    summary='Link or update FIDE, Lichess, and Chess.com accounts',
+)
+async def update_player_external_accounts(
+    item_id: UUID,
+    payload: PlayerExternalAccountUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+    sync_fide: bool = Query(False, description='Sync ratings when fide_id changes'),
+    sync_lichess: bool = Query(False, description='Sync ratings when lichess_username changes'),
+    sync_chesscom: bool = Query(False, description='Sync ratings when chesscom_username changes'),
+):
+    player = await service.get(db, item_id)
+    await authz.ensure_can_manage_player_external_account(db, current_user, player)
+    payload_data = payload.model_dump(exclude_unset=True)
+    if not payload_data:
+        return player
+    return await service.update(
+        db,
+        item_id,
+        payload_data,
+        sync_fide=sync_fide,
+        sync_lichess=sync_lichess,
+        sync_chesscom=sync_chesscom,
+    )
 
 
 @router.patch('/{item_id}', response_model=PlayerResponse, summary='Update Player')

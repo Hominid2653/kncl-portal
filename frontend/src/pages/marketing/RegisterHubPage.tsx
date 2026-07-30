@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
-import { ClipboardListIcon, ShieldIcon, UserCircle2Icon, UsersIcon } from 'lucide-react'
+import { ArrowRightIcon, ClipboardListIcon, ShieldIcon, UserCircle2Icon, UsersIcon } from 'lucide-react'
 
+import MarketingPageShell from '@/components/marketing/MarketingPageShell'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -33,28 +34,36 @@ const options = [
 
 export default function RegisterHubPage() {
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-4 py-12 sm:px-6">
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold tracking-[0.35em] text-muted-foreground uppercase">Get started</p>
-        <h1 className="text-3xl font-semibold tracking-tight">Register with KNCL</h1>
-        <p className="text-muted-foreground">
-          Federation officials create coordinator accounts. Coordinators approve new clubs and captains. Once approved, sign in with your application email.
-        </p>
-      </div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <MarketingPageShell
+      eyebrow="Get started"
+      title="Register with KNCL"
+      description="Federation officials create coordinator accounts. Coordinators approve new clubs and captains. Once approved, sign in with your application email."
+      width="5xl"
+    >
+      <div className="grid gap-6 sm:grid-cols-2">
         {options.map((option) => (
-          <Card key={option.href} className="flex flex-col">
-            <CardHeader>
-              <option.icon className="mb-2 size-5 text-kenya-green" />
-              <CardTitle className="text-lg">{option.title}</CardTitle>
-              <CardDescription>{option.description}</CardDescription>
+          <Card
+            key={option.href}
+            className="group flex flex-col border-border/80 shadow-sm transition-shadow hover:shadow-md"
+          >
+            <CardHeader className="flex-1 gap-4">
+              <div className="flex size-11 items-center justify-center rounded-lg border bg-muted/40 text-kenya-green transition-colors group-hover:bg-kenya-green/10">
+                <option.icon className="size-5" />
+              </div>
+              <div className="space-y-2">
+                <CardTitle className="text-lg">{option.title}</CardTitle>
+                <CardDescription className="text-sm leading-6">{option.description}</CardDescription>
+              </div>
             </CardHeader>
-            <div className="mt-auto px-6 pb-6">
-              <Button variant="outline" className="w-full" render={<Link to={option.href} />}>Continue</Button>
+            <div className="px-6 pb-6">
+              <Button variant="outline" className="w-full" render={<Link to={option.href} />}>
+                Continue
+                <ArrowRightIcon data-icon="inline-end" className="size-4" />
+              </Button>
             </div>
           </Card>
         ))}
       </div>
-    </div>
+    </MarketingPageShell>
   )
 }

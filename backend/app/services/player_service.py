@@ -31,12 +31,19 @@ class PlayerService(BaseService[Player]):
         *,
         sync_lichess: bool = False,
         sync_chesscom: bool = False,
+        sync_fide: bool = False,
         skip_external_validation: bool = False,
     ):
         existing = await self.get(db, obj_id)
         updates = dict(obj_in)
 
         if not skip_external_validation:
+            if "fide_id" in updates:
+                await self._apply_fide_id_change(
+                    existing,
+                    updates,
+                    sync=sync_fide,
+                )
             if "lichess_username" in updates:
                 await self._apply_lichess_username_change(
                     existing,
@@ -87,6 +94,29 @@ class PlayerService(BaseService[Player]):
             {"headshot_moderation_status": moderation_status},
             skip_external_validation=True,
         )
+
+    async def _apply_fide_id_change(
+        self,
+        existing: Player,
+        updates: dict[str, Any],
+        *,
+        sync: bool,
+    ) -> None:
+        new_fide_id = updates.get("fide_id")
+        if new_fide_id == existing.fide_id:
+            updates.pop("fide_id", None)
+            return
+
+        if not new_fide_id:
+            return
+
+        from app.services.fide_service import FideService
+
+        profile = await FideService(player_service=self).lookup_player(new_fide_id)
+        if sync:
+            updates["classical_rating"] = profile.ratings.classical
+            updates["rapid_rating"] = profile.ratings.rapid
+            updates["blitz_rating"] = profile.ratings.blitz
 
     async def _apply_lichess_username_change(
         self,

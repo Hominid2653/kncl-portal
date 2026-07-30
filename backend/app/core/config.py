@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     supabase_storage_bucket: str = "documents"
     max_upload_size_bytes: int = 10 * 1024 * 1024
 
+    fide_ratings_base_url: str = "https://ratings.fide.com"
     lichess_base_url: str = "https://lichess.org"
     chesscom_base_url: str = "https://api.chess.com"
     external_api_cache_ttl_seconds: int = 600
