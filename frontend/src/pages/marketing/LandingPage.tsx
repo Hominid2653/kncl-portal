@@ -3,7 +3,7 @@ import { ArrowRightIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { marketingStats } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
 
 const features = [
   { title: 'Player registry', description: 'Centralised profiles with verification status, ratings, and club history.' },
@@ -13,6 +13,7 @@ const features = [
 ]
 
 export default function LandingPage() {
+  const { marketingStats } = usePortalData()
   return (
     <>
       <section className="border-b border-kenya-red/20 bg-background">

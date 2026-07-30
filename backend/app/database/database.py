@@ -8,6 +8,8 @@ engine = create_engine(
     settings.database_url,
     echo=True,
     future=True,
+    pool_pre_ping=True,
+    pool_recycle=300,
 )
 
 SessionLocal = sessionmaker(
@@ -20,6 +22,8 @@ async_engine = create_async_engine(
     settings.database_url,
     echo=True,
     future=True,
+    pool_pre_ping=True,
+    pool_recycle=300,
 )
 
 AsyncSessionLocal = async_sessionmaker(

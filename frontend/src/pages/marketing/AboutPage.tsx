@@ -4,10 +4,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSeason } from '@/context/SeasonContext'
-import { leagues } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
 
 export default function AboutPage() {
   const { seasons } = useSeason()
+  const { leagues } = usePortalData()
   return (
     <div className="mx-auto max-w-7xl space-y-10 px-4 py-16 sm:px-6">
       <div className="max-w-3xl space-y-4">

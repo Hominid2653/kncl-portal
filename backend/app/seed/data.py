@@ -137,6 +137,7 @@ USER_PROFILES = [
         "last_name": "Otieno",
         "phone": "+254700000002",
         "role": UserRole.LEAGUE_COORDINATOR,
+        "coordinator_league_ids": [LEAGUE_ID],
     },
     {
         "id": USER_CLUB_ADMIN_NAIROBI_ID,

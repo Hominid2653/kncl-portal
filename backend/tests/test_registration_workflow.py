@@ -106,7 +106,7 @@ def test_cannot_approve_non_pending_registration(
         headers=league_coord_headers,
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 409
 
 
 def test_registrations_do_not_expose_patch(

@@ -1,9 +1,10 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { notifications } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
 import PortalLayout from '@/layouts/PortalLayout'
 
 export default function PlayerNotificationsPage() {
+  const { notifications } = usePortalData()
   return (
     <PortalLayout portalLabel="Player portal">
       <div className="space-y-6">

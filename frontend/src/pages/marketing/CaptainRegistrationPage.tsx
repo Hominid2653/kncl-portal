@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useOnboarding } from '@/context/OnboardingContext'
-import { leagues } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
 
 const schema = z.object({
   leagueId: z.string().min(1),
@@ -31,6 +31,7 @@ type CaptainForm = z.infer<typeof schema>
 export default function CaptainRegistrationPage() {
   const navigate = useNavigate()
   const { submitClubApplication } = useOnboarding()
+  const { leagues } = usePortalData()
   const fileRef = useRef<HTMLInputElement>(null)
   const [charterFileName, setCharterFileName] = useState<string>()
   const [step, setStep] = useState<'form' | 'verify'>('form')
@@ -39,7 +40,7 @@ export default function CaptainRegistrationPage() {
   const form = useForm<CaptainForm>({
     resolver: zodResolver(schema),
     defaultValues: {
-      leagueId: leagues[0].id,
+      leagueId: leagues[0]?.id ?? '',
       clubName: '',
       county: '',
       description: '',
@@ -61,7 +62,7 @@ export default function CaptainRegistrationPage() {
     const id = submitClubApplication(
       {
         ...pendingData,
-        leagueName: league.name,
+        leagueName: league?.name ?? 'League',
         charterFileName,
         charterUrl: charterFileName ? '#' : undefined,
       },

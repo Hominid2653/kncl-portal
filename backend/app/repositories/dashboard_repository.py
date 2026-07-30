@@ -5,7 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
 from app.models.club import Club
-from app.models.enums import RegistrationStatus, TransferStatus
+from app.models.club_captain_application import ClubCaptainApplication
+from app.models.enums import ApplicationStatus, EngagementStatus, RegistrationStatus, TransferStatus
+from app.models.player_engagement import PlayerEngagement
+from app.models.player_profile_application import PlayerProfileApplication
 from app.models.notification import Notification
 from app.models.player import Player
 from app.models.registration import Registration
@@ -68,8 +71,9 @@ class DashboardRepository:
         for club_id, club_name in clubs_result.all():
             transfer_count = await self._count_pending_transfers_for_club(db, club_id)
             registration_count = await self._count_pending_registrations_for_club(db, club_id)
-            if transfer_count or registration_count or club_ids is not None:
-                rows.append((club_id, club_name, transfer_count, registration_count))
+            engagement_count = await self._count_pending_engagements_for_club(db, club_id)
+            if transfer_count or registration_count or engagement_count or club_ids is not None:
+                rows.append((club_id, club_name, transfer_count, registration_count, engagement_count))
         return rows
 
     async def registrations_by_season(
@@ -199,6 +203,52 @@ class DashboardRepository:
             .where(
                 Transfer.status == TransferStatus.PENDING,
                 or_(Transfer.from_club_id == club_id, Transfer.to_club_id == club_id),
+            )
+        )
+        return int(result.scalar_one())
+
+    async def count_pending_club_applications(self, db: AsyncSession) -> int:
+        result = await db.execute(
+            select(func.count())
+            .select_from(ClubCaptainApplication)
+            .where(ClubCaptainApplication.status == ApplicationStatus.PENDING)
+        )
+        return int(result.scalar_one())
+
+    async def count_pending_player_applications(self, db: AsyncSession) -> int:
+        result = await db.execute(
+            select(func.count())
+            .select_from(PlayerProfileApplication)
+            .where(PlayerProfileApplication.status == ApplicationStatus.PENDING)
+        )
+        return int(result.scalar_one())
+
+    async def count_pending_engagements(self, db: AsyncSession, *, club_ids: list[UUID] | None = None) -> int:
+        query = select(func.count()).select_from(PlayerEngagement).where(
+            PlayerEngagement.status == EngagementStatus.PENDING
+        )
+        if club_ids is not None:
+            if not club_ids:
+                return 0
+            query = query.where(
+                or_(
+                    PlayerEngagement.requesting_club_id.in_(club_ids),
+                    PlayerEngagement.recipient_club_id.in_(club_ids),
+                )
+            )
+        result = await db.execute(query)
+        return int(result.scalar_one())
+
+    async def _count_pending_engagements_for_club(self, db: AsyncSession, club_id: UUID) -> int:
+        result = await db.execute(
+            select(func.count())
+            .select_from(PlayerEngagement)
+            .where(
+                PlayerEngagement.status == EngagementStatus.PENDING,
+                or_(
+                    PlayerEngagement.requesting_club_id == club_id,
+                    PlayerEngagement.recipient_club_id == club_id,
+                ),
             )
         )
         return int(result.scalar_one())

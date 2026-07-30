@@ -30,6 +30,11 @@ class Notification(BaseModel):
         nullable=False,
     )
 
+    engagement_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        nullable=True,
+    )
+
     user_profile = relationship(
         "UserProfile",
         back_populates="notifications",

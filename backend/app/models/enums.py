@@ -53,3 +53,14 @@ class EngagementStatus(str, Enum):
     ACCEPTED = "ACCEPTED"
     DECLINED = "DECLINED"
     WITHDRAWN = "WITHDRAWN"
+
+
+class EngagementRecipientType(str, Enum):
+    PLAYER = "PLAYER"
+    CLUB_CAPTAIN = "CLUB_CAPTAIN"
+
+
+class HeadshotSource(str, Enum):
+    UPLOAD = "UPLOAD"
+    URL = "URL"
+    EXTERNAL = "EXTERNAL"

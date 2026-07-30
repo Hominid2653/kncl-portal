@@ -26,6 +26,13 @@ from app.seed.data import (
 )
 
 
+@pytest.fixture(autouse=True)
+def disable_resend_in_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "resend_api_key", None)
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app, raise_server_exceptions=False)

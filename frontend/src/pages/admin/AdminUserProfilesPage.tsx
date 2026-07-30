@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+import { createCoordinator } from '@/api/applications'
 import { DataTable } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,9 +22,11 @@ import {
 } from '@/components/ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { roleLabels } from '@/constants/roles'
 import { useAuth } from '@/context/AuthContext'
-import { userProfiles } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
+import { USE_API } from '@/lib/api-config'
 import PortalLayout from '@/layouts/PortalLayout'
 import type { UserProfileRecord } from '@/types'
 
@@ -32,6 +35,7 @@ const coordinatorSchema = z.object({
   lastName: z.string().min(2),
   email: z.string().email(),
   phone: z.string().optional(),
+  leagueId: z.string().min(1, 'Select a league'),
 })
 
 type CoordinatorForm = z.infer<typeof coordinatorSchema>
@@ -44,17 +48,50 @@ const columns: ColumnDef<UserProfileRecord, unknown>[] = [
 ]
 
 export default function AdminUserProfilesPage() {
-  const { user } = useAuth()
+  const { user, accessToken } = useAuth()
+  const { userProfiles, leagues, refresh } = usePortalData()
   const [open, setOpen] = useState(false)
   const isFederationAdmin = user?.role === 'FEDERATION_ADMIN'
 
   const form = useForm<CoordinatorForm>({
     resolver: zodResolver(coordinatorSchema),
-    defaultValues: { firstName: '', lastName: '', email: '', phone: '' },
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      leagueId: leagues[0]?.id ?? '',
+    },
   })
 
-  const onCreateCoordinator = async () => {
-    toast.success('League coordinator account created (mock). They can now sign in and review club applications.')
+  const onCreateCoordinator = async (data: CoordinatorForm) => {
+    if (USE_API) {
+      if (!accessToken) {
+        toast.error('You must be signed in to create coordinators.')
+        return
+      }
+      try {
+        await createCoordinator(
+          {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            email: data.email,
+            phone: data.phone,
+            league_ids: [data.leagueId],
+          },
+          accessToken,
+        )
+        await refresh()
+        toast.success('League coordinator account created. They will receive a welcome email with sign-in instructions.')
+        setOpen(false)
+        form.reset()
+        return
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to create coordinator.')
+        return
+      }
+    }
+    toast.success('League coordinator account created.')
     setOpen(false)
     form.reset()
   }
@@ -92,6 +129,22 @@ export default function AdminUserProfilesPage() {
                     )} />
                     <FormField control={form.control} name="phone" render={({ field }) => (
                       <FormItem><FormLabel>Phone (optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="leagueId" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>League</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger><SelectValue placeholder="Select league" /></SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {leagues.map((league) => (
+                              <SelectItem key={league.id} value={league.id}>{league.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
                     )} />
                     <DialogFooter>
                       <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

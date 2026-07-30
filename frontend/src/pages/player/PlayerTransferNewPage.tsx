@@ -10,10 +10,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/context/AuthContext'
+import { usePortalData } from '@/context/PortalDataContext'
 import { useSeason } from '@/context/SeasonContext'
 import { useTransfers } from '@/context/TransferContext'
 import { canPlayerSubmitTransferRequest } from '@/lib/business-rules'
-import { clubs } from '@/data/mockData'
 import { getClubLeagueId } from '@/lib/coordinator'
 import PortalLayout from '@/layouts/PortalLayout'
 
@@ -27,6 +27,7 @@ type TransferForm = z.infer<typeof schema>
 export default function PlayerTransferNewPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { clubs } = usePortalData()
   const { submitPlayerTransferRequest, getPendingTransferForPlayer } = useTransfers()
   const { isTransferWindowOpen, getSeasonForLeague } = useSeason()
 

@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useOnboarding } from '@/context/OnboardingContext'
-import { leagues } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
 
 const schema = z.object({
   firstName: z.string().min(2),
@@ -28,6 +28,7 @@ type PlayerForm = z.infer<typeof schema>
 export default function PlayerRegistrationPage() {
   const navigate = useNavigate()
   const { submitPlayerRegistration } = useOnboarding()
+  const { leagues } = usePortalData()
   const [step, setStep] = useState<'form' | 'verify'>('form')
   const [pendingData, setPendingData] = useState<PlayerForm | null>(null)
 
@@ -39,7 +40,7 @@ export default function PlayerRegistrationPage() {
       email: '',
       county: '',
       nationality: 'Kenya',
-      leagueId: leagues[0].id,
+      leagueId: leagues[0]?.id ?? '',
     },
   })
 
@@ -51,10 +52,10 @@ export default function PlayerRegistrationPage() {
   const onEmailVerified = (token: string) => {
     if (!pendingData) return
     const league = leagues.find((l) => l.id === pendingData.leagueId) ?? leagues[0]
-    const id = submitPlayerRegistration({ ...pendingData, leagueName: league.name }, token)
+    const id = submitPlayerRegistration({ ...pendingData, leagueName: league?.name ?? 'League' }, token)
     if (!id) return
 
-    form.reset({ firstName: '', lastName: '', email: '', county: '', nationality: 'Kenya', leagueId: leagues[0].id })
+    form.reset({ firstName: '', lastName: '', email: '', county: '', nationality: 'Kenya', leagueId: leagues[0]?.id ?? '' })
     setPendingData(null)
     setStep('form')
     navigate(`/register/status?email=${encodeURIComponent(pendingData.email)}&type=player&verified=1`)

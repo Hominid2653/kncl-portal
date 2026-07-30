@@ -7,12 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { registrationStatusLabels, registrationStatusVariants, transferStatusLabels, transferStatusVariants } from '@/constants/status'
 import { useAuth } from '@/context/AuthContext'
 import { useEngagements } from '@/context/EngagementContext'
-import { notifications, playerDashboardStats, registrations, transfers } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
+import { useTransfers } from '@/context/TransferContext'
 import PortalLayout from '@/layouts/PortalLayout'
 
 export default function PlayerDashboardPage() {
   const { user } = useAuth()
   const { getPlayerEngagements } = useEngagements()
+  const { playerDashboardStats, registrations, notifications } = usePortalData()
+  const { transfers } = useTransfers()
   const engagements = user?.playerId ? getPlayerEngagements(user.playerId) : []
   const pendingEngagements = engagements.filter((e) => e.status === 'PENDING')
 

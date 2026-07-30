@@ -13,20 +13,12 @@ import { initials } from '@/context/PlayerListingsContext'
 interface PlayerHeadshotUploadProps {
   playerName: string
   headshotUrl: string
-  onSave: (url: string) => void
+  onSaveUrl: (url: string) => void
+  onUploadFile: (file: File) => Promise<void>
 }
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE_MB = 5
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
 
 function validateImageFile(file: File) {
   if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -37,9 +29,15 @@ function validateImageFile(file: File) {
   }
 }
 
-export default function PlayerHeadshotUpload({ playerName, headshotUrl, onSave }: PlayerHeadshotUploadProps) {
+export default function PlayerHeadshotUpload({
+  playerName,
+  headshotUrl,
+  onSaveUrl,
+  onUploadFile,
+}: PlayerHeadshotUploadProps) {
   const [urlInput, setUrlInput] = useState(headshotUrl)
   const [dragging, setDragging] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const applyUrl = useCallback(
@@ -49,26 +47,26 @@ export default function PlayerHeadshotUpload({ playerName, headshotUrl, onSave }
         toast.error('Enter a valid image URL.')
         return
       }
-      onSave(trimmed)
+      onSaveUrl(trimmed)
       setUrlInput(trimmed)
-      toast.success('Headshot updated (mock)')
     },
-    [onSave],
+    [onSaveUrl],
   )
 
   const handleFile = useCallback(
     async (file: File) => {
       try {
         validateImageFile(file)
-        const dataUrl = await readFileAsDataUrl(file)
-        onSave(dataUrl)
-        setUrlInput(dataUrl)
-        toast.success('Headshot uploaded (mock)')
+        setUploading(true)
+        await onUploadFile(file)
+        setUrlInput('')
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Could not upload image.')
+      } finally {
+        setUploading(false)
       }
     },
-    [onSave],
+    [onUploadFile],
   )
 
   const onDrop = useCallback(
@@ -85,7 +83,7 @@ export default function PlayerHeadshotUpload({ playerName, headshotUrl, onSave }
     <Card>
       <CardHeader>
         <CardTitle>Profile photo</CardTitle>
-        <CardDescription>Add a headshot via link, upload, or drag and drop. Shown on public player listings.</CardDescription>
+        <CardDescription>Upload an image file or paste a public image link. Shown on listings after coordinator approval.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center gap-4">
@@ -120,14 +118,15 @@ export default function PlayerHeadshotUpload({ playerName, headshotUrl, onSave }
                 <p className="font-medium">Drag and drop your headshot here</p>
                 <p className="text-sm text-muted-foreground">JPG, PNG, or WebP up to {MAX_SIZE_MB}MB</p>
               </div>
-              <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                Choose file
+              <Button type="button" variant="outline" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+                {uploading ? 'Uploading…' : 'Choose file'}
               </Button>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept={ACCEPTED_TYPES.join(',')}
                 className="hidden"
+                disabled={uploading}
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (file) await handleFile(file)

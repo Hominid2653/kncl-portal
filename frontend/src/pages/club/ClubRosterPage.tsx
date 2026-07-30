@@ -7,8 +7,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 import { useOnboarding } from '@/context/OnboardingContext'
+import { usePortalData } from '@/context/PortalDataContext'
 import { useSeason } from '@/context/SeasonContext'
-import { clubs, clubMembers } from '@/data/mockData'
 import { getClubLeagueId } from '@/lib/coordinator'
 import type { ClubMemberRecord } from '@/types'
 import { MIN_ROSTER_SIZE } from '@/lib/business-rules'
@@ -22,6 +22,7 @@ const columns: ColumnDef<ClubMemberRecord, unknown>[] = [
 
 export default function ClubRosterPage() {
   const { user } = useAuth()
+  const { clubs, clubMembers } = usePortalData()
   const { isClubInInitialRosterPeriod, getClubRosterCount } = useOnboarding()
   const { canModifyRoster, getSeasonForLeague } = useSeason()
 

@@ -1,48 +1,74 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 import { z } from 'zod'
 
 import PlayerHeadshotUpload from '@/components/player-headshot-upload'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/context/AuthContext'
+import { usePortalData } from '@/context/PortalDataContext'
 import { KNCL_LEAGUE_ID } from '@/lib/coordinator'
 import { usePlayerListings } from '@/context/PlayerListingsContext'
 import PortalLayout from '@/layouts/PortalLayout'
 
 const schema = z.object({
-  federationId: z.string().min(1),
-  nationality: z.string().min(1),
+  federationId: z.string(),
+  nationality: z.string(),
   fideRating: z.string().optional(),
 })
 
 export default function PlayerProfilePage() {
   const { user } = useAuth()
-  const { listings, submitHeadshotForReview, getHeadshotUrl, getPendingHeadshotForPlayer } = usePlayerListings()
-  const player = listings.find((p) => p.id === user?.playerId) ?? listings[0]
+  const { playerById } = usePortalData()
+  const { submitHeadshotForReview, submitHeadshotFile, getHeadshotUrl, getPendingHeadshotForPlayer } = usePlayerListings()
+
+  const player = user?.playerId ? playerById(user.playerId) : undefined
   const pendingHeadshot = user?.playerId ? getPendingHeadshotForPlayer(user.playerId) : undefined
 
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      federationId: player.federationId,
-      nationality: player.nationality,
-      fideRating: String(player.fideRating ?? ''),
+      federationId: player?.federationId ?? '',
+      nationality: player?.nationality ?? '',
+      fideRating: String(player?.fideRating ?? ''),
     },
   })
 
-  const headshotUrl = getHeadshotUrl(player)
+  useEffect(() => {
+    if (!player) return
+    form.reset({
+      federationId: player.federationId,
+      nationality: player.nationality,
+      fideRating: String(player.fideRating ?? ''),
+    })
+  }, [player, form])
+
+  if (!player) {
+    return (
+      <PortalLayout portalLabel="Player portal">
+        <Alert>
+          <AlertTitle>Player profile not found</AlertTitle>
+          <AlertDescription>Your account is not linked to a player record yet.</AlertDescription>
+        </Alert>
+      </PortalLayout>
+    )
+  }
+
+  const headshotUrl = getHeadshotUrl({
+    id: player.id,
+    name: player.name,
+    headshotUrl: undefined,
+  })
 
   return (
     <PortalLayout portalLabel="Player portal">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold">My profile</h1>
-          <p className="text-sm text-muted-foreground">Update your player record and public listing photo.</p>
+          <p className="text-sm text-muted-foreground">Update your public listing photo. Other profile fields are managed by your club captain.</p>
         </div>
 
         {pendingHeadshot && (
@@ -55,9 +81,11 @@ export default function PlayerProfilePage() {
         <PlayerHeadshotUpload
           playerName={player.name}
           headshotUrl={pendingHeadshot?.proposedUrl ?? headshotUrl}
-          onSave={(url) => {
-            const playerId = user?.playerId ?? player.id
-            submitHeadshotForReview(playerId, player.name, KNCL_LEAGUE_ID, url)
+          onSaveUrl={(url) => {
+            submitHeadshotForReview(player.id, player.name, KNCL_LEAGUE_ID, url)
+          }}
+          onUploadFile={async (file) => {
+            await submitHeadshotFile(player.id, player.name, KNCL_LEAGUE_ID, file)
           }}
         />
 
@@ -65,18 +93,17 @@ export default function PlayerProfilePage() {
           <CardHeader><CardTitle>{player.name}</CardTitle></CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(async () => { toast.success('Profile saved (mock)') })} className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField control={form.control} name="federationId" render={({ field }) => (
-                  <FormItem><FormLabel>Federation ID</FormLabel><FormControl><Input {...field} readOnly /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Federation ID</FormLabel><FormControl><Input {...field} readOnly /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="nationality" render={({ field }) => (
-                  <FormItem><FormLabel>Nationality</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Nationality</FormLabel><FormControl><Input {...field} readOnly /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="fideRating" render={({ field }) => (
-                  <FormItem><FormLabel>FIDE rating</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>FIDE rating</FormLabel><FormControl><Input {...field} readOnly /></FormControl></FormItem>
                 )} />
-                <div className="md:col-span-2"><Button type="submit">Save changes</Button></div>
-              </form>
+              </div>
             </Form>
           </CardContent>
         </Card>

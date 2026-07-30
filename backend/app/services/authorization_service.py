@@ -6,12 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import Forbidden
 from app.dependencies.auth import CurrentUser
 from app.models.club import Club
+from app.models.club import Club
 from app.models.club_member import ClubMember
 from app.models.document import Document
 from app.models.enums import UserRole
 from app.models.notification import Notification
 from app.models.player import Player
 from app.models.registration import Registration
+from app.models.season import Season
 from app.models.transfer import Transfer
 from app.models.transfer_approval import TransferApproval
 from app.models.user_profile import UserProfile
@@ -123,8 +125,11 @@ class AuthorizationService:
         user: CurrentUser,
         filters: dict,
     ) -> dict:
-        if self.is_league_leadership(user):
+        if self.is_federation_admin(user):
             return filters
+
+        if user.role is UserRole.LEAGUE_COORDINATOR:
+            return await self._scope_by_coordinator_leagues(db, user, filters, field="club_id")
 
         filters = dict(filters)
         if user.role is UserRole.PLAYER:
@@ -144,7 +149,14 @@ class AuthorizationService:
         user: CurrentUser,
         filters: dict,
     ) -> dict:
-        if self.is_league_leadership(user):
+        if self.is_federation_admin(user):
+            return filters
+
+        if user.role is UserRole.LEAGUE_COORDINATOR:
+            club_ids = await self._club_ids_for_coordinator(db, user)
+            transfer_ids = await self.get_transfer_ids_for_clubs(db, club_ids)
+            filters = dict(filters)
+            filters["id"] = [str(item) for item in transfer_ids] or [str(UUID(int=0))]
             return filters
 
         filters = dict(filters)
@@ -393,3 +405,39 @@ class AuthorizationService:
     def ensure_audit_log_access(self, user: CurrentUser) -> None:
         if not self.is_league_leadership(user):
             raise Forbidden("You do not have permission to access audit logs.")
+
+    async def ensure_can_manage_season(
+        self,
+        db: AsyncSession,
+        user: CurrentUser,
+        season: Season,
+    ) -> None:
+        if self.is_federation_admin(user):
+            return
+        if user.role is UserRole.LEAGUE_COORDINATOR:
+            profile = await db.get(UserProfile, user.id)
+            league_ids = profile.coordinator_league_ids if profile else None
+            if not league_ids:
+                return
+        raise Forbidden("You do not have permission to manage this season.")
+
+    async def _club_ids_for_coordinator(self, db: AsyncSession, user: CurrentUser) -> list[UUID]:
+        profile = await db.get(UserProfile, user.id)
+        league_ids = profile.coordinator_league_ids if profile else []
+        if not league_ids:
+            return []
+        result = await db.execute(select(Club.id).where(Club.league_id.in_(league_ids)))
+        return list(result.scalars().all())
+
+    async def _scope_by_coordinator_leagues(
+        self,
+        db: AsyncSession,
+        user: CurrentUser,
+        filters: dict,
+        *,
+        field: str,
+    ) -> dict:
+        club_ids = await self._club_ids_for_coordinator(db, user)
+        filters = dict(filters)
+        filters[field] = [str(club_id) for club_id in club_ids] or [str(UUID(int=0))]
+        return filters

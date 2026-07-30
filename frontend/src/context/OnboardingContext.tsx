@@ -1,12 +1,24 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode, type SetStateAction } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
+import {
+  listClubApplications,
+  listPlayerApplications,
+  postClubApplication,
+  postPlayerApplication,
+  reviewClubApplication,
+  reviewPlayerApplication,
+} from '@/api/applications'
 import { useAuth } from '@/context/AuthContext'
 import { useOtp } from '@/context/OtpContext'
 import { usePlayerListings } from '@/context/PlayerListingsContext'
 import { filterByLeagueScope } from '@/lib/coordinator'
 import { isClubInInitialRosterPeriod as checkInitialPeriod } from '@/lib/business-rules'
-import { clubs } from '@/data/mockData'
+import { USE_API, hasApiSession } from '@/lib/api-config'
+import { queryKeys } from '@/lib/query-keys'
+import { STALE_PORTAL_MS } from '@/lib/query-client'
+import { usePortalData } from '@/context/PortalDataContext'
 import { initialClubCaptainApplications, initialPlayerRegistrationApplications } from '@/data/mockOnboarding'
 import type { ApplicationStatus, ClubCaptainApplication, MockUser, PlayerRegistrationApplication } from '@/types'
 
@@ -75,6 +87,72 @@ function timestamp() {
   return new Date().toLocaleString('en-KE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
+interface ApiClubApplication {
+  id: string
+  club_name: string
+  county: string
+  league_id: string
+  description?: string | null
+  captain_first_name: string
+  captain_last_name: string
+  captain_email: string
+  captain_phone: string
+  status: ApplicationStatus
+  rejection_reason?: string | null
+  created_at?: string
+}
+
+interface ApiPlayerApplication {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  county: string
+  nationality: string
+  league_id?: string | null
+  status: ApplicationStatus
+  rejection_reason?: string | null
+  federation_id?: string | null
+  created_at?: string
+}
+
+function mapClubApplicationFromApi(item: ApiClubApplication): ClubCaptainApplication {
+  return {
+    id: item.id,
+    clubName: item.club_name,
+    county: item.county,
+    leagueId: item.league_id,
+    leagueName: '',
+    description: item.description ?? undefined,
+    captainFirstName: item.captain_first_name,
+    captainLastName: item.captain_last_name,
+    captainEmail: item.captain_email,
+    captainPhone: item.captain_phone,
+    status: item.status,
+    rejectionReason: item.rejection_reason ?? undefined,
+    submittedAt: item.created_at ?? timestamp(),
+    emailVerifiedAt: item.created_at ?? timestamp(),
+  }
+}
+
+function mapPlayerApplicationFromApi(item: ApiPlayerApplication): PlayerRegistrationApplication {
+  return {
+    id: item.id,
+    firstName: item.first_name,
+    lastName: item.last_name,
+    email: item.email,
+    county: item.county,
+    nationality: item.nationality,
+    leagueId: item.league_id ?? '',
+    leagueName: '',
+    status: item.status,
+    federationId: item.federation_id ?? undefined,
+    rejectionReason: item.rejection_reason ?? undefined,
+    submittedAt: item.created_at ?? timestamp(),
+    emailVerifiedAt: item.created_at ?? timestamp(),
+  }
+}
+
 function findLatestByEmail<T extends { email?: string; captainEmail?: string }>(
   items: T[],
   email: string,
@@ -88,15 +166,80 @@ function findLatestByEmail<T extends { email?: string; captainEmail?: string }>(
 }
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const { provisionUser } = useAuth()
+  const { user, accessToken, loading: authLoading, provisionUser } = useAuth()
+  const { clubs } = usePortalData()
   const { consumeToken } = useOtp()
   const { addFreeAgentFromApplication } = usePlayerListings()
-  const [clubApplications, setClubApplications] = useState(initialClubCaptainApplications)
-  const [playerApplications, setPlayerApplications] = useState(initialPlayerRegistrationApplications)
+  const queryClient = useQueryClient()
+  const [mockClubApplications, setMockClubApplications] = useState(initialClubCaptainApplications)
+  const [mockPlayerApplications, setMockPlayerApplications] = useState(initialPlayerRegistrationApplications)
   const [initialRosterClubIds, setInitialRosterClubIds] = useState<string[]>([])
-  const [clubRosterCounts, setClubRosterCounts] = useState<Record<string, number>>(() =>
-    Object.fromEntries(clubs.map((c) => [c.id, c.players])),
-  )
+  const [clubRosterCounts, setClubRosterCounts] = useState<Record<string, number>>({})
+
+  const isCoordinator =
+    user?.role === 'FEDERATION_ADMIN' || user?.role === 'LEAGUE_COORDINATOR'
+
+  const clubAppsQuery = useQuery({
+    queryKey: queryKeys.clubApplications,
+    queryFn: async () => {
+      const response = await listClubApplications(accessToken)
+      return (response?.items ?? []).map((item) =>
+        mapClubApplicationFromApi(item as ApiClubApplication),
+      )
+    },
+    enabled: USE_API && !authLoading && Boolean(user) && hasApiSession() && isCoordinator,
+    staleTime: STALE_PORTAL_MS,
+    placeholderData: (previous) => previous,
+  })
+
+  const playerAppsQuery = useQuery({
+    queryKey: queryKeys.playerApplications,
+    queryFn: async () => {
+      const response = await listPlayerApplications(accessToken)
+      return (response?.items ?? []).map((item) =>
+        mapPlayerApplicationFromApi(item as ApiPlayerApplication),
+      )
+    },
+    enabled: USE_API && !authLoading && Boolean(user) && hasApiSession() && isCoordinator,
+    staleTime: STALE_PORTAL_MS,
+    placeholderData: (previous) => previous,
+  })
+
+  const clubApplications = USE_API ? (clubAppsQuery.data ?? []) : mockClubApplications
+  const playerApplications = USE_API ? (playerAppsQuery.data ?? []) : mockPlayerApplications
+
+  const setClubApplications = (updater: SetStateAction<ClubCaptainApplication[]>) => {
+    if (USE_API) {
+      queryClient.setQueryData<ClubCaptainApplication[]>(queryKeys.clubApplications, (prev) => {
+        const current = prev ?? []
+        return typeof updater === 'function' ? updater(current) : updater
+      })
+      return
+    }
+    setMockClubApplications(updater)
+  }
+
+  const setPlayerApplications = (updater: SetStateAction<PlayerRegistrationApplication[]>) => {
+    if (USE_API) {
+      queryClient.setQueryData<PlayerRegistrationApplication[]>(queryKeys.playerApplications, (prev) => {
+        const current = prev ?? []
+        return typeof updater === 'function' ? updater(current) : updater
+      })
+      return
+    }
+    setMockPlayerApplications(updater)
+  }
+
+  const invalidateApplications = () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.clubApplications })
+    void queryClient.invalidateQueries({ queryKey: queryKeys.playerApplications })
+  }
+
+  useEffect(() => {
+    if (clubs.length) {
+      setClubRosterCounts(Object.fromEntries(clubs.map((c) => [c.id, c.players])))
+    }
+  }, [clubs])
 
   const value = useMemo<OnboardingContextValue>(
     () => ({
@@ -130,6 +273,38 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           return ''
         }
 
+        if (USE_API) {
+          void postClubApplication(
+            {
+              club_name: input.clubName,
+              county: input.county,
+              league_id: input.leagueId,
+              description: input.description,
+              captain_first_name: input.captainFirstName,
+              captain_last_name: input.captainLastName,
+              captain_email: input.captainEmail,
+              captain_phone: input.captainPhone,
+            },
+            emailVerificationToken,
+          )
+            .then((result) => {
+              if (!result) return
+              toast.success('Application submitted. Track status with your email.')
+              setClubApplications((prev) => [
+                {
+                  id: result.id,
+                  ...input,
+                  status: 'PENDING',
+                  submittedAt: timestamp(),
+                  emailVerifiedAt: timestamp(),
+                },
+                ...prev,
+              ])
+            })
+            .catch(() => toast.error('Failed to submit club application.'))
+          return 'pending'
+        }
+
         const pending = clubApplications.some(
           (a) => a.captainEmail.toLowerCase() === input.captainEmail.toLowerCase() && a.status === 'PENDING',
         )
@@ -156,6 +331,36 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           return ''
         }
 
+        if (USE_API) {
+          void postPlayerApplication(
+            {
+              first_name: input.firstName,
+              last_name: input.lastName,
+              email: input.email,
+              county: input.county,
+              nationality: input.nationality,
+              league_id: input.leagueId,
+            },
+            emailVerificationToken,
+          )
+            .then((result) => {
+              if (!result) return
+              toast.success('Profile request submitted. Track status with your email.')
+              setPlayerApplications((prev) => [
+                {
+                  id: result.id,
+                  ...input,
+                  status: 'PENDING',
+                  submittedAt: timestamp(),
+                  emailVerifiedAt: timestamp(),
+                },
+                ...prev,
+              ])
+            })
+            .catch(() => toast.error('Failed to submit player application.'))
+          return 'pending'
+        }
+
         const pending = playerApplications.some(
           (a) => a.email.toLowerCase() === input.email.toLowerCase() && a.status === 'PENDING',
         )
@@ -179,6 +384,33 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       reviewClubApplication: ({ id, status, reviewerName, rejectionReason }) => {
         if (status === 'REJECTED' && !rejectionReason?.trim()) {
           toast.error('A rejection message is required.')
+          return
+        }
+
+        if (USE_API && accessToken) {
+          void reviewClubApplication(
+            id,
+            { status, rejection_reason: rejectionReason },
+            accessToken,
+          )
+            .then(() => {
+              setClubApplications((prev) =>
+                prev.map((item) =>
+                  item.id === id
+                    ? {
+                        ...item,
+                        status,
+                        rejectionReason: status === 'REJECTED' ? rejectionReason : undefined,
+                        reviewedAt: timestamp(),
+                        reviewedBy: reviewerName,
+                      }
+                    : item,
+                ),
+              )
+              toast.success(status === 'APPROVED' ? 'Club application approved.' : 'Club application rejected.')
+              invalidateApplications()
+            })
+            .catch(() => toast.error('Failed to review club application.'))
           return
         }
 
@@ -229,6 +461,33 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           return
         }
 
+        if (USE_API && accessToken) {
+          void reviewPlayerApplication(
+            id,
+            { status, rejection_reason: rejectionReason },
+            accessToken,
+          )
+            .then(() => {
+              setPlayerApplications((prev) =>
+                prev.map((item) =>
+                  item.id === id
+                    ? {
+                        ...item,
+                        status,
+                        rejectionReason: status === 'REJECTED' ? rejectionReason : undefined,
+                        reviewedAt: timestamp(),
+                        reviewedBy: reviewerName,
+                      }
+                    : item,
+                ),
+              )
+              toast.success(status === 'APPROVED' ? 'Player application approved.' : 'Player application rejected.')
+              invalidateApplications()
+            })
+            .catch(() => toast.error('Failed to review player application.'))
+          return
+        }
+
         const target = playerApplications.find((item) => item.id === id)
         if (!target) return
         if (target.status !== 'PENDING') {
@@ -273,7 +532,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [clubApplications, playerApplications, initialRosterClubIds, clubRosterCounts, addFreeAgentFromApplication, provisionUser, consumeToken],
+    [clubApplications, playerApplications, initialRosterClubIds, clubRosterCounts, addFreeAgentFromApplication, provisionUser, consumeToken, accessToken],
   )
 
   return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>

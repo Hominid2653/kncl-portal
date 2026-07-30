@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { fetchApplicationStatus } from '@/api/application-status'
 import { EmailOtpVerification } from '@/components/email-otp-verification'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -14,12 +15,22 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { registrationStatusLabels, registrationStatusVariants } from '@/constants/status'
 import { useOnboarding } from '@/context/OnboardingContext'
+import { USE_API } from '@/lib/api-config'
+import type { ApplicationStatus } from '@/types'
 
 const schema = z.object({
   email: z.string().email('Enter the email used on your application'),
 })
 
 type StatusForm = z.infer<typeof schema>
+
+function formatSubmittedAt(value: string) {
+  try {
+    return new Date(value).toLocaleString('en-KE', { month: 'short', day: 'numeric', year: 'numeric' })
+  } catch {
+    return value
+  }
+}
 
 export default function ApplicationStatusPage() {
   const [searchParams] = useSearchParams()
@@ -30,22 +41,52 @@ export default function ApplicationStatusPage() {
   const [step, setStep] = useState<'email' | 'verify' | 'results'>('email')
   const [pendingEmail, setPendingEmail] = useState('')
   const [verifiedEmail, setVerifiedEmail] = useState('')
+  const [apiStatus, setApiStatus] = useState<Awaited<ReturnType<typeof fetchApplicationStatus>>>(null)
 
   const form = useForm<StatusForm>({
     resolver: zodResolver(schema),
     defaultValues: { email: searchParams.get('email') ?? '' },
   })
 
-  const playerApp = verifiedEmail ? getPlayerApplicationByEmail(verifiedEmail) : undefined
-  const clubApp = verifiedEmail ? getClubApplicationByEmail(verifiedEmail) : undefined
+  const mockPlayerApp = verifiedEmail ? getPlayerApplicationByEmail(verifiedEmail) : undefined
+  const mockClubApp = verifiedEmail ? getClubApplicationByEmail(verifiedEmail) : undefined
+
+  const playerApp = USE_API && apiStatus?.player_application
+    ? {
+        firstName: apiStatus.player_application.first_name,
+        lastName: apiStatus.player_application.last_name,
+        email: verifiedEmail,
+        status: apiStatus.player_application.status as ApplicationStatus,
+        rejectionReason: apiStatus.player_application.rejection_reason ?? undefined,
+        submittedAt: formatSubmittedAt(apiStatus.player_application.submitted_at),
+        leagueName: 'KNCL',
+        federationId: undefined,
+      }
+    : mockPlayerApp
+
+  const clubApp = USE_API && apiStatus?.club_application
+    ? {
+        clubName: apiStatus.club_application.club_name,
+        captainEmail: verifiedEmail,
+        captainFirstName: '',
+        captainLastName: '',
+        status: apiStatus.club_application.status as ApplicationStatus,
+        rejectionReason: apiStatus.club_application.rejection_reason ?? undefined,
+        leagueName: 'KNCL',
+      }
+    : mockClubApp
 
   const onEmailSubmit = (data: StatusForm) => {
     setPendingEmail(data.email)
     setStep('verify')
   }
 
-  const onVerified = () => {
+  const onVerified = async (token: string) => {
     setVerifiedEmail(pendingEmail)
+    if (USE_API) {
+      const status = await fetchApplicationStatus(token)
+      setApiStatus(status)
+    }
     setStep('results')
   }
 
@@ -53,6 +94,7 @@ export default function ApplicationStatusPage() {
     setStep('email')
     setPendingEmail('')
     setVerifiedEmail('')
+    setApiStatus(null)
     form.reset({ email: '' })
   }
 
@@ -72,7 +114,7 @@ export default function ApplicationStatusPage() {
         <p className="text-[10px] font-semibold tracking-[0.35em] text-muted-foreground uppercase">Application tracker</p>
         <h1 className="text-3xl font-semibold tracking-tight">Check application status</h1>
         <p className="text-muted-foreground">
-          Verify your email to view application status. Once approved, sign in with that email via Supabase Auth (welcome email sent from the backend).
+          Verify your email to view application status. Once approved, sign in with the email and password from your welcome email.
         </p>
       </div>
 
@@ -110,7 +152,7 @@ export default function ApplicationStatusPage() {
               email={pendingEmail}
               purpose="STATUS_LOOKUP"
               autoSend
-              onVerified={onVerified}
+              onVerified={(token) => void onVerified(token)}
             />
             <Button type="button" variant="ghost" onClick={() => setStep('email')}>
               Use a different email
@@ -153,7 +195,7 @@ export default function ApplicationStatusPage() {
                       <Alert className="border-l-4 border-l-kenya-green">
                         <AlertTitle>Approved — you can sign in</AlertTitle>
                         <AlertDescription>
-                          Federation ID: <strong>{playerApp.federationId}</strong>. Use your email at the login page. The backend sends a welcome email with sign-in instructions via Resend.
+                          Use your email at the login page. Check your inbox for a welcome email with your temporary password.
                         </AlertDescription>
                       </Alert>
                     )}
@@ -166,7 +208,7 @@ export default function ApplicationStatusPage() {
                     {playerApp.status === 'PENDING' && (
                       <Alert>
                         <AlertTitle>Under review</AlertTitle>
-                        <AlertDescription>A league coordinator is reviewing your player profile. Check back later.</AlertDescription>
+                        <AlertDescription>A league coordinator is reviewing your player profile.</AlertDescription>
                       </Alert>
                     )}
                     <Button render={<Link to="/login" state={{ email: playerApp.email }} />}>Go to sign in</Button>
@@ -187,14 +229,17 @@ export default function ApplicationStatusPage() {
                         {registrationStatusLabels[clubApp.status]}
                       </Badge>
                     </div>
-                    <CardDescription>{clubApp.leagueName} · Captain: {clubApp.captainFirstName} {clubApp.captainLastName}</CardDescription>
+                    <CardDescription>
+                      {clubApp.leagueName}
+                      {clubApp.captainFirstName ? ` · Captain: ${clubApp.captainFirstName} ${clubApp.captainLastName}` : ''}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 text-sm">
                     {clubApp.status === 'APPROVED' && (
                       <Alert className="border-l-4 border-l-kenya-green">
                         <AlertTitle>Approved — captain account ready</AlertTitle>
                         <AlertDescription>
-                          Sign in with <strong>{clubApp.captainEmail}</strong>. Your club has an initial roster period to add free agents.
+                          Sign in with <strong>{clubApp.captainEmail}</strong>. Check your welcome email for your temporary password.
                         </AlertDescription>
                       </Alert>
                     )}

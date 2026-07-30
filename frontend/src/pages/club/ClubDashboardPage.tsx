@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/context/AuthContext'
 import { useEngagements } from '@/context/EngagementContext'
-import { clubDashboardStats } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
 import PortalLayout from '@/layouts/PortalLayout'
 
 export default function ClubDashboardPage() {
   const { user } = useAuth()
   const { getClubEngagements } = useEngagements()
+  const { clubDashboardStats } = usePortalData()
   const engagements = user?.clubId ? getClubEngagements(user.clubId) : []
   const pendingEngagements = engagements.filter((e) => e.status === 'PENDING')
 

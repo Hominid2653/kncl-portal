@@ -1,10 +1,11 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, String
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Index, Integer, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import BaseModel
+from app.models.enums import HeadshotSource
 
 
 class Player(BaseModel):
@@ -43,6 +44,16 @@ class Player(BaseModel):
     nationality: Mapped[str | None] = mapped_column(String(100))
     date_of_birth: Mapped[date | None] = mapped_column(Date)
     profile_photo: Mapped[str | None] = mapped_column(String)
+
+    headshot_url: Mapped[str | None] = mapped_column(String(500))
+    headshot_source: Mapped[HeadshotSource | None] = mapped_column(Enum(HeadshotSource))
+    headshot_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    headshot_moderation_status: Mapped[str] = mapped_column(
+        String(20),
+        default="APPROVED",
+        server_default="APPROVED",
+        nullable=False,
+    )
 
     user_profile = relationship("UserProfile", back_populates="player")
 

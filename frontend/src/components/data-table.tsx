@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useDeferredValue, useState } from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -11,7 +11,9 @@ import {
 } from "@tanstack/react-table"
 import { SearchIcon } from "lucide-react"
 
+import { DataTableSkeleton } from "@/components/skeletons/data-table-skeleton"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Pagination,
   PaginationContent,
@@ -28,11 +30,15 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
+const LAZY_LIST_THRESHOLD = 40
+
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, unknown>[]
   data: TData[]
   searchKey?: string
   searchPlaceholder?: string
+  loading?: boolean
+  pageSize?: number
 }
 
 export function DataTable<TData>({
@@ -40,12 +46,16 @@ export function DataTable<TData>({
   data,
   searchKey,
   searchPlaceholder = "Search...",
+  loading = false,
+  pageSize = 8,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState("")
+  const deferredData = useDeferredValue(data)
+  const isDeferring = data.length >= LAZY_LIST_THRESHOLD && deferredData !== data
 
   const table = useReactTable({
-    data,
+    data: deferredData,
     columns,
     state: { sorting, globalFilter },
     onSortingChange: setSorting,
@@ -60,8 +70,12 @@ export function DataTable<TData>({
           return value.includes(String(filterValue).toLowerCase())
         }
       : undefined,
-    initialState: { pagination: { pageSize: 8 } },
+    initialState: { pagination: { pageSize } },
   })
+
+  if (loading) {
+    return <DataTableSkeleton columns={columns.length} rows={pageSize} />
+  }
 
   return (
     <div className="space-y-4">
@@ -75,7 +89,12 @@ export function DataTable<TData>({
         />
       </div>
 
-      <div className="rounded-xl border">
+      <div className="relative rounded-xl border">
+        {isDeferring && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[1px]">
+            <Skeleton className="h-4 w-32" />
+          </div>
+        )}
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

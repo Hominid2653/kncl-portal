@@ -11,10 +11,12 @@ from app.dependencies.auth import (
     require_league_leadership,
 )
 from app.dependencies.dependencies import get_db
+from app.models.enums import TransferSource
 from app.schemas.transfer import (
     TransferAction,
     TransferCreate,
     TransferListResponse,
+    TransferPlayerRequest,
     TransferResponse,
     TransferUpdate,
 )
@@ -59,6 +61,33 @@ async def create_transfer(
 ):
     await authz.ensure_can_manage_club_by_id(db, current_user, payload.from_club_id)
     return await service.submit(db, payload, current_user)
+
+
+@router.post(
+    '/player-request',
+    response_model=TransferResponse,
+    summary='Submit player transfer request',
+    status_code=201,
+)
+async def create_player_transfer_request(
+    payload: TransferPlayerRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    player = await authz.get_player_for_user(db, current_user)
+    if not player:
+        from app.core.exceptions import Forbidden
+
+        raise Forbidden("No player profile is linked to this account.")
+
+    transfer_payload = TransferCreate(
+        from_club_id=payload.from_club_id,
+        to_club_id=payload.to_club_id,
+        reason=payload.reason,
+        source=TransferSource.PLAYER_REQUEST,
+        player_id=player.id,
+    )
+    return await service.submit(db, transfer_payload, current_user)
 
 
 @router.post(

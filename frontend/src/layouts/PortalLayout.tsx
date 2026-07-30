@@ -31,6 +31,7 @@ import {
 import { roleLabels } from '@/constants/roles'
 import { getNavForRole } from '@/constants/navigation'
 import { useAuth } from '@/context/AuthContext'
+import { usePortalData } from '@/context/PortalDataContext'
 
 interface PortalLayoutProps {
   children: ReactNode
@@ -39,6 +40,7 @@ interface PortalLayoutProps {
 
 export default function PortalLayout({ children, portalLabel }: PortalLayoutProps) {
   const { user, logout } = useAuth()
+  const { isRefreshing } = usePortalData()
   const location = useLocation()
   const navItems = user ? getNavForRole(user.role) : []
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}` : 'KN'
@@ -104,6 +106,9 @@ export default function PortalLayout({ children, portalLabel }: PortalLayoutProp
             </BreadcrumbList>
           </Breadcrumb>
           <div className="ml-auto flex items-center gap-2">
+            {isRefreshing && (
+              <span className="text-xs text-muted-foreground">Refreshing…</span>
+            )}
             {user && (
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 {user.firstName} {user.lastName}

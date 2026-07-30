@@ -1,11 +1,12 @@
 from uuid import UUID
 
 from sqlalchemy import Enum, String
-from sqlalchemy.dialects.postgresql import ARRAY, UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
 from app.models.enums import UserRole
+from app.models.types import UUIDList
 
 
 class UserProfile(BaseModel):
@@ -24,7 +25,7 @@ class UserProfile(BaseModel):
     role: Mapped[UserRole] = mapped_column(Enum(UserRole))
 
     coordinator_league_ids: Mapped[list[UUID] | None] = mapped_column(
-        ARRAY(PG_UUID(as_uuid=True)),
+        UUIDList(),
         nullable=True,
     )
 

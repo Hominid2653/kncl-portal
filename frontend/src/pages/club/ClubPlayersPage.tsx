@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { DataTable } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { players } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
 import type { PlayerRecord } from '@/types'
 import PortalLayout from '@/layouts/PortalLayout'
 
@@ -17,6 +17,7 @@ const columns: ColumnDef<PlayerRecord, unknown>[] = [
 ]
 
 export default function ClubPlayersPage() {
+  const { players } = usePortalData()
   return (
     <PortalLayout portalLabel="Club portal">
       <div className="space-y-6">

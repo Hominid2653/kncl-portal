@@ -3,7 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { DataTable } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { registrationStatusLabels, registrationStatusVariants } from '@/constants/status'
-import { registrations } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
 import type { RegistrationRecord } from '@/types'
 import PortalLayout from '@/layouts/PortalLayout'
 
@@ -15,6 +15,7 @@ const columns: ColumnDef<RegistrationRecord, unknown>[] = [
 ]
 
 export default function PlayerRegistrationsPage() {
+  const { registrations } = usePortalData()
   return (
     <PortalLayout portalLabel="Player portal">
       <div className="space-y-6">

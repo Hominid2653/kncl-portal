@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,7 +13,9 @@ class Settings(BaseSettings):
     database_url: str
 
     supabase_url: str
-    supabase_anon_key: str
+    supabase_anon_key: str = Field(
+        validation_alias=AliasChoices("supabase_anon_key", "SUPABASE_ANON_KEY", "SUPABASE_KEY"),
+    )
     supabase_service_role_key: str
     supabase_jwt_secret: str = ""
     supabase_storage_bucket: str = "documents"
@@ -25,6 +28,9 @@ class Settings(BaseSettings):
     external_api_rate_limit_window_seconds: int = 60
 
     secret_key: str
+
+    frontend_url: str = "http://localhost:5173"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     resend_api_key: str = ""
     resend_from_email: str = "KNCL Portal <noreply@kncl.local>"
@@ -42,6 +48,10 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 @lru_cache

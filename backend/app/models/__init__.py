@@ -14,6 +14,7 @@ from app.models.transfer import Transfer
 from app.models.transfer_approval import TransferApproval
 from app.models.document import Document
 from app.models.notification import Notification
+from app.models.player_engagement import PlayerEngagement
 from app.models.audit_log import AuditLog
 
 __all__ = [

@@ -5,7 +5,7 @@ import pytest
 
 from app.core.exceptions import Forbidden, Unauthorized
 from app.core.security import create_supabase_token, decode_supabase_token
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import resolve_current_user
 from app.models.enums import UserRole
 from app.seed.data import AUTH_FED_ADMIN_ID, USER_FED_ADMIN_ID
 
@@ -32,12 +32,9 @@ async def _get_user_from_bearer(token: str):
     from app.database.database import AsyncSessionLocal
 
     async with AsyncSessionLocal() as db:
-        return await get_current_user(
+        return await resolve_current_user(
+            db,
             authorization=f"Bearer {token}",
-            mock_role=None,
-            mock_user_id=None,
-            mock_email=None,
-            db=db,
         )
 
 

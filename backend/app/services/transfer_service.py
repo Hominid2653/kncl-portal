@@ -5,8 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import DuplicateResource, ResourceNotFound, ValidationError
 from app.dependencies.auth import CurrentUser
+from app.lib.business_rules import assert_transfer_window, player_has_approved_registration
 from app.models.audit_log import AuditLog
-from app.models.enums import ApprovalDecision, RegistrationStatus, TransferStatus
+from app.models.enums import ApprovalDecision, RegistrationStatus, TransferSource, TransferStatus
 from app.models.notification import Notification
 from app.models.registration import Registration
 from app.models.transfer import Transfer
@@ -36,12 +37,13 @@ class TransferService(BaseService[Transfer]):
         data: TransferCreate,
         actor: CurrentUser,
     ) -> Transfer:
-        registration = await self._get_registration(db, data.registration_id)
+        registration = await self._resolve_registration(db, data)
+        await assert_transfer_window(db, season_id=registration.season_id)
         self._validate_submission(registration, data)
 
         existing_pending = await self.repository.get_pending_for_registration(
             db,
-            data.registration_id,
+            registration.id,
         )
         if existing_pending:
             raise DuplicateResource(
@@ -50,10 +52,14 @@ class TransferService(BaseService[Transfer]):
 
         now = datetime.now(timezone.utc)
         transfer = Transfer(
-            registration_id=data.registration_id,
+            registration_id=registration.id,
             from_club_id=data.from_club_id,
             to_club_id=data.to_club_id,
             reason=data.reason,
+            source=data.source,
+            player_id=data.player_id or registration.player_id,
+            engagement_id=data.engagement_id,
+            submitted_by_user_profile_id=actor.id,
             status=TransferStatus.PENDING,
             submitted_at=now,
         )
@@ -275,7 +281,23 @@ class TransferService(BaseService[Transfer]):
 
     def _ensure_pending(self, transfer: Transfer, action: str) -> None:
         if transfer.status is not TransferStatus.PENDING:
-            raise ValidationError(f"Only pending transfers can be {action}.")
+            raise DuplicateResource(f"Only pending transfers can be {action}.")
+
+    async def _resolve_registration(
+        self,
+        db: AsyncSession,
+        data: TransferCreate,
+    ) -> Registration:
+        if data.registration_id:
+            return await self._get_registration(db, data.registration_id)
+
+        if not data.player_id:
+            raise ValidationError("player_id is required when registration_id is omitted.")
+
+        registration = await player_has_approved_registration(db, data.player_id)
+        if not registration:
+            raise ValidationError("Player must have an approved registration to request a transfer.")
+        return registration
 
     async def _create_notification(
         self,

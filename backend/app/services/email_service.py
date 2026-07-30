@@ -26,11 +26,31 @@ class EmailService:
             text=f"Your {application_type} application has been received and is pending review.",
         )
 
-    async def send_welcome_email(self, *, email: str, role: str, sign_in_url: str) -> None:
+    async def send_welcome_email(
+        self,
+        *,
+        email: str,
+        role: str,
+        sign_in_url: str,
+        temporary_password: str | None = None,
+    ) -> None:
+        if temporary_password:
+            text = (
+                f"Your {role} account is ready.\n\n"
+                f"Sign in at {sign_in_url}\n"
+                f"Email: {email}\n"
+                f"Temporary password: {temporary_password}\n\n"
+                "Please change your password after signing in."
+            )
+        else:
+            text = (
+                f"Your {role} account is ready. Sign in at {sign_in_url}\n\n"
+                "Use the password reset link on the login page if you need a new password."
+            )
         await self._send_email(
             to=email,
             subject="Welcome to KNCL Portal",
-            text=f"Your {role} account is ready. Sign in at {sign_in_url}",
+            text=text,
         )
 
     async def send_rejection_email(

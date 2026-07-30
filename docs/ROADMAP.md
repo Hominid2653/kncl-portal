@@ -31,9 +31,9 @@ Frontend mock reference: `frontend/src/lib/business-rules.ts`.
 | [x] | `clubs.initial_roster_period_active`, `approved_roster_count` | Migration + model |
 | [x] | `transfers.source`, `player_id`, `engagement_id`, `submitted_by_user_profile_id` | Migration + model |
 | [x] | `user_profiles.coordinator_league_ids` (UUID array) | Migration + model |
-| [~] | Service skeletons | `otp_service`, `email_service`, `provisioning_service` |
-| [ ] | `Engagement` model + migration | Phase 5 |
-| [ ] | Unit tests for window / roster rules | `tests/test_business_rules.py` |
+| [x] | Service skeletons | `otp_service`, `email_service`, `application_service`, `provisioning_service` |
+| [x] | `Engagement` model + migration | `player_engagements` |
+| [x] | Unit tests for window / roster rules | `tests/test_business_rules.py` |
 
 ---
 
@@ -48,9 +48,9 @@ Frontend mock reference: `frontend/src/lib/business-rules.ts`.
 | [x] | `POST /auth/otp/request` | `app/api/v1/endpoints/auth_otp.py` |
 | [x] | `POST /auth/otp/verify` | same |
 | [x] | `GET /application-status` (verification token) | `app/api/v1/endpoints/application_status.py` |
-| [~] | `ProvisioningService` stub (Supabase Admin) | `app/services/provisioning_service.py` |
+| [x] | `ProvisioningService` stub (Supabase Admin) | `app/services/provisioning_service.py` |
 | [x] | Integration tests for OTP flow | `tests/test_otp_auth.py` |
-| [ ] | Wire frontend `api/auth-otp.ts` to real API | Phase 7 |
+| [x] | Wire frontend `api/auth-otp.ts` to real API | Phase 7 |
 
 ---
 
@@ -58,12 +58,12 @@ Frontend mock reference: `frontend/src/lib/business-rules.ts`.
 
 | Status | Task |
 |--------|------|
-| [ ] | `POST /club-applications/` (requires verification token) |
-| [ ] | `POST /player-applications/` |
-| [ ] | Coordinator `GET/PATCH` review endpoints |
-| [ ] | `POST /users/coordinators` (federation) |
-| [ ] | Approve → `ProvisioningService` + welcome email |
-| [ ] | Wire `OnboardingContext` |
+| [x] | `POST /club-applications/` (requires verification token) |
+| [x] | `POST /player-applications/` |
+| [x] | Coordinator `GET/PATCH` review endpoints |
+| [x] | `POST /users/coordinators` (federation) |
+| [x] | Approve → `ProvisioningService` + welcome email |
+| [~] | Wire `OnboardingContext` (`api/applications.ts`; loads/reviews via API when `VITE_USE_API`) |
 
 ---
 
@@ -71,12 +71,12 @@ Frontend mock reference: `frontend/src/lib/business-rules.ts`.
 
 | Status | Task |
 |--------|------|
-| [ ] | Refactor `RegistrationService` → roster enrollment rules |
-| [ ] | `POST /roster-enrollments/` alias; engagement-initiated path |
-| [ ] | `TransferService`: `PLAYER_REQUEST`, `ENGAGEMENT` sources |
-| [ ] | Window guards + `409` on double review |
-| [ ] | Initial roster period ends at `MIN_ROSTER_SIZE` |
-| [ ] | Wire `RosterEnrollmentContext`, `TransferContext` |
+| [x] | Refactor `RegistrationService` → roster enrollment rules |
+| [x] | `POST /roster-enrollments/` alias; engagement-initiated path |
+| [x] | `TransferService`: `PLAYER_REQUEST`, `ENGAGEMENT` sources |
+| [x] | Window guards + `409` on double review |
+| [x] | Initial roster period ends at `MIN_ROSTER_SIZE` |
+| [x] | Wire `RosterEnrollmentContext`, `TransferContext` (API + mock fallback) |
 
 ---
 
@@ -84,10 +84,10 @@ Frontend mock reference: `frontend/src/lib/business-rules.ts`.
 
 | Status | Task |
 |--------|------|
-| [ ] | `player_engagements` migration + API |
-| [ ] | `GET /players/listings` (public) |
-| [ ] | Headshot moderation API |
-| [ ] | Wire engagement + listings pages |
+| [x] | `player_engagements` migration + API |
+| [x] | `GET /players/listings` (public) |
+| [x] | Headshot moderation API |
+| [x] | Wire engagement + listings pages (`EngagementContext`, `PlayerListingsContext`, `PortalDataContext`) |
 
 ---
 
@@ -95,10 +95,10 @@ Frontend mock reference: `frontend/src/lib/business-rules.ts`.
 
 | Status | Task |
 |--------|------|
-| [ ] | `PATCH /seasons/{id}` window toggles + audit |
-| [ ] | Dashboard pending counts |
-| [ ] | Coordinator `league_ids` scoping on queues |
-| [ ] | In-app notifications for key events |
+| [x] | `PATCH /seasons/{id}` window toggles + audit |
+| [x] | Dashboard pending counts |
+| [x] | Coordinator `league_ids` scoping on queues |
+| [x] | In-app notifications for key events |
 
 ---
 
@@ -108,11 +108,13 @@ Wire order: Auth → OTP/applications → admin queues → seasons → engagemen
 
 | Status | Task |
 |--------|------|
-| [ ] | Supabase SDK login + `api/client.ts` |
-| [ ] | Replace OTP mock |
-| [ ] | Replace onboarding mock |
-| [ ] | Replace engagement/transfer mocks |
-| [ ] | `VITE_API_MOCK` flag for cutover |
+| [x] | Supabase SDK login + `api/client.ts` (`api/auth.ts`, dev mock headers) |
+| [x] | Replace OTP mock (`api/auth-otp.ts`) |
+| [x] | Replace onboarding mock (`api/applications.ts`, `OnboardingContext`) |
+| [x] | Replace engagement/transfer mocks (`EngagementContext`, `TransferContext`, `RosterEnrollmentContext`) |
+| [x] | `PortalDataContext` — leagues, clubs, players, dashboards, notifications, documents |
+| [x] | All portal pages use contexts instead of direct `mockData` imports |
+| [x] | `VITE_USE_API` / `VITE_API_MOCK` flag (`lib/api-config.ts`) |
 
 ---
 
@@ -130,6 +132,6 @@ Wire order: Auth → OTP/applications → admin queues → seasons → engagemen
 
 ## Current sprint focus
 
-**Phases 0–2** (this session): roadmap, migration, OTP/Resend endpoints, tests.
+**Phase 7 complete** — Frontend wired to backend via `VITE_USE_API=true`. Mock data retained only as offline fallback in contexts.
 
-**Next sprint:** Phase 3 — application submit + approve + provision.
+**Next sprint:** Phase 8 — E2E, CI, production Resend domain.

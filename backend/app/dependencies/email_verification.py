@@ -1,4 +1,4 @@
-from fastapi import Depends, Header
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.exceptions import Unauthorized
@@ -18,6 +18,14 @@ async def require_email_verification_token(
         raise Unauthorized("Email verification token is required.")
 
     return decode_email_verification_token(credentials.credentials)
+
+
+async def require_application_submit_token(
+    token: EmailVerificationTokenPayload = Depends(require_email_verification_token),
+) -> EmailVerificationTokenPayload:
+    if token.purpose is not OtpPurpose.APPLICATION_SUBMIT:
+        raise Unauthorized("This token is not valid for application submission.")
+    return token
 
 
 async def require_status_lookup_token(

@@ -23,13 +23,14 @@ import { useEngagements } from '@/context/EngagementContext'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { useSeason } from '@/context/SeasonContext'
 import { usePlayerListings } from '@/context/PlayerListingsContext'
-import { clubs } from '@/data/mockData'
+import { usePortalData } from '@/context/PortalDataContext'
 import { getClubLeagueId } from '@/lib/coordinator'
 import PortalLayout from '@/layouts/PortalLayout'
 import type { PlayerListingRecord } from '@/types'
 
 export default function ClubPlayerNewPage() {
   const { user } = useAuth()
+  const { clubs } = usePortalData()
   const { createEngagement } = useEngagements()
   const [selected, setSelected] = useState<PlayerListingRecord | null>(null)
   const [message, setMessage] = useState('')

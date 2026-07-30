@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.common import parse_filters
@@ -8,9 +8,11 @@ from app.dependencies.auth import (
     CurrentUser,
     require_authenticated,
     require_club_leadership,
-    require_federation_admin
+    require_federation_admin,
+    require_league_leadership,
 )
 from app.dependencies.dependencies import get_db
+from app.models.enums import PlayerCommitmentStatus, TransferSource
 from app.schemas.external_accounts import (
     PlayerExternalAccountComparison,
     VerificationCodeResponse,
@@ -22,16 +24,22 @@ from app.schemas.player import (
     PlayerResponse,
     PlayerUpdate
 )
+from app.schemas.headshot import HeadshotModerationUpdate, HeadshotResponse, HeadshotUpdate
+from app.schemas.player_listing import PlayerListingResponse
 from app.services.authorization_service import AuthorizationService
 from app.services.chesscom_service import ChessComService
+from app.services.engagement_service import PlayerListingService
+from app.services.headshot_service import HeadshotService
 from app.services.lichess_service import LichessService
 from app.services.player_service import PlayerService
 
 router = APIRouter(prefix='/players', tags=['Players'])
 service = PlayerService()
+listing_service = PlayerListingService()
 lichess_service = LichessService()
 chesscom_service = ChessComService()
 authz = AuthorizationService()
+headshot_service = HeadshotService()
 
 
 @router.get('/', response_model=PlayerListResponse, summary='List Players')
@@ -56,6 +64,29 @@ async def list_player(
         sort_order=sort_order,
         page=page,
         page_size=page_size,
+    )
+
+
+@router.get('/listings', response_model=PlayerListingResponse, summary='Public player listings')
+async def list_player_listings(
+    db: AsyncSession = Depends(get_db),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    search: str | None = Query(None),
+    commitment_status: PlayerCommitmentStatus | None = Query(None),
+    county: str | None = Query(None),
+    sort_by: str = Query("name"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
+):
+    return await listing_service.list_public(
+        db,
+        page=page,
+        page_size=page_size,
+        search=search,
+        commitment_status=commitment_status,
+        county=county,
+        sort_by=sort_by,
+        sort_order=sort_order,
     )
 
 
@@ -221,6 +252,68 @@ async def confirm_player_chesscom_verification(
     player = await service.get(db, item_id)
     await authz.ensure_can_manage_player_external_account(db, current_user, player)
     return await chesscom_service.confirm_verification(db, player)
+
+
+@router.post(
+    '/{item_id}/headshot/upload',
+    response_model=HeadshotResponse,
+    summary='Upload player headshot image',
+    status_code=201,
+)
+async def upload_player_headshot(
+    item_id: UUID,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    player = await service.get(db, item_id)
+    await authz.ensure_can_manage_player_external_account(db, current_user, player)
+    content = await file.read()
+    updated = await headshot_service.upload_file(
+        db,
+        item_id,
+        filename=file.filename or "headshot.jpg",
+        content_type=file.content_type,
+        content=content,
+    )
+    return await headshot_service.to_response(updated)
+
+
+@router.patch('/{item_id}/headshot', response_model=HeadshotResponse, summary='Update player headshot from URL')
+async def update_player_headshot(
+    item_id: UUID,
+    payload: HeadshotUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_authenticated),
+):
+    player = await service.get(db, item_id)
+    await authz.ensure_can_manage_player_external_account(db, current_user, player)
+    updated = await service.update_headshot(
+        db,
+        item_id,
+        headshot_url=str(payload.headshot_url),
+        headshot_source=payload.headshot_source,
+    )
+    return await headshot_service.to_response(updated)
+
+
+@router.patch(
+    '/{item_id}/headshot/moderate',
+    response_model=HeadshotResponse,
+    summary='Moderate player headshot',
+)
+async def moderate_player_headshot(
+    item_id: UUID,
+    payload: HeadshotModerationUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(require_league_leadership),
+):
+    updated = await service.moderate_headshot(
+        db,
+        item_id,
+        moderation_status=payload.headshot_moderation_status,
+    )
+    return await headshot_service.to_response(updated)
 
 
 @router.patch('/{item_id}', response_model=PlayerResponse, summary='Update Player')

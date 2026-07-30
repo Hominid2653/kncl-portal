@@ -52,6 +52,9 @@ class DashboardService:
                     user.id,
                     unread_only=True,
                 ),
+                pending_club_applications=await self.repository.count_pending_club_applications(db),
+                pending_player_applications=await self.repository.count_pending_player_applications(db),
+                pending_engagements=await self.repository.count_pending_engagements(db),
             ),
             transfer_counts=transfer_counts,
             pending_by_club=[
@@ -61,7 +64,7 @@ class DashboardService:
                     pending_transfers=pending_transfers,
                     pending_registrations=pending_registrations,
                 )
-                for club_id, club_name, pending_transfers, pending_registrations in pending_rows
+                for club_id, club_name, pending_transfers, pending_registrations, _pending_engagements in pending_rows
                 if pending_transfers or pending_registrations
             ],
             registrations_by_season=self._group_season_registrations(season_rows),
@@ -76,7 +79,7 @@ class DashboardService:
         club_ids = await self._club_scope(db, user)
         club_rows = await self.repository.pending_by_club(db, club_ids=club_ids)
         clubs: list[ClubDashboardClubSummary] = []
-        for club_id, club_name, pending_transfers, pending_registrations in club_rows:
+        for club_id, club_name, pending_transfers, pending_registrations, pending_engagements in club_rows:
             transfer_counts = self._status_counts(
                 await self.repository.transfer_status_counts(db, club_ids=[club_id])
             )
@@ -86,6 +89,7 @@ class DashboardService:
                     club_name=club_name,
                     pending_transfers=pending_transfers,
                     pending_registrations=pending_registrations,
+                    pending_engagements=pending_engagements,
                     transfer_counts=transfer_counts,
                 )
             )
