@@ -118,7 +118,7 @@ class LichessService:
         if not player.lichess_verification_code:
             raise ValidationError("Request a verification code before confirming.")
 
-        data = await self.client.get_user(player.lichess_username)
+        data = await self.client.get_user(player.lichess_username, skip_cache=True)
         bio = (data.get("profile") or {}).get("bio") or ""
         if player.lichess_verification_code.upper() not in bio.upper():
             raise ValidationError("Verification code was not found in the Lichess profile bio.")

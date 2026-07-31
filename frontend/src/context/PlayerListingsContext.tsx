@@ -176,7 +176,15 @@ export function PlayerListingsProvider({ children }: { children: ReactNode }) {
 
           county: item.county ?? '',
 
-          fideRating: item.fide_rating ?? undefined,
+          fideId: item.fide_id ?? undefined,
+
+          classicalRating: item.classical_rating ?? item.fide_rating ?? undefined,
+
+          rapidRating: item.rapid_rating ?? undefined,
+
+          blitzRating: item.blitz_rating ?? undefined,
+
+          fideRating: item.classical_rating ?? item.fide_rating ?? undefined,
 
           lichessUsername: item.lichess_username ?? undefined,
 

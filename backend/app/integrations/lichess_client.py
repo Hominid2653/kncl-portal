@@ -4,7 +4,7 @@ import httpx
 
 from app.core.config import settings
 from app.core.exceptions import ExternalServiceError, ResourceNotFound, ValidationError
-from app.integrations.external_cache import get_cached_payload, set_cached_payload
+from app.integrations.external_cache import get_cached_payload, invalidate_cached_payload, set_cached_payload
 
 LICHESS_USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_-]{0,19}$")
 
@@ -24,12 +24,15 @@ class LichessClient:
             raise ValidationError("Lichess username format is invalid.")
         return normalized
 
-    async def get_user(self, username: str) -> dict:
+    async def get_user(self, username: str, *, skip_cache: bool = False) -> dict:
         normalized = self.normalize_username(username)
         cache_key = f"lichess:user:{normalized.lower()}"
-        cached = get_cached_payload(cache_key)
-        if cached is not None:
-            return cached
+        if skip_cache:
+            invalidate_cached_payload(cache_key)
+        else:
+            cached = get_cached_payload(cache_key)
+            if cached is not None:
+                return cached
 
         url = f"{self.base_url}/api/user/{normalized}"
 

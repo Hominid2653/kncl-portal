@@ -26,6 +26,11 @@ def set_cached_payload(cache_key: str, payload: dict) -> None:
         _cache[cache_key] = (time.time(), payload)
 
 
+def invalidate_cached_payload(cache_key: str) -> None:
+    with _lock:
+        _cache.pop(cache_key, None)
+
+
 def clear_external_cache() -> None:
     with _lock:
         _cache.clear()

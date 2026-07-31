@@ -1,5 +1,6 @@
 import { apiRequest } from '@/api/client'
-import { USE_API } from '@/lib/api-config'
+import { apiUrl } from '@/lib/api-base'
+import { getApiAuthHeaders, USE_API } from '@/lib/api-config'
 
 export async function createLeague(payload: { name: string; description?: string }) {
   if (!USE_API) return null
@@ -17,9 +18,7 @@ export async function createNotification(payload: {
 
 export async function uploadDocument(formData: FormData) {
   if (!USE_API) return null
-  const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'
-  const { getApiAuthHeaders } = await import('@/lib/api-config')
-  const response = await fetch(`${API_BASE}/documents/upload`, {
+  const response = await fetch(apiUrl('/documents/upload'), {
     method: 'POST',
     headers: getApiAuthHeaders(),
     body: formData,

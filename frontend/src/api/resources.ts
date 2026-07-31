@@ -99,6 +99,8 @@ export interface ApiPlayer {
   lichess_verified?: boolean
   chesscom_verified?: boolean
   classical_rating?: number | null
+  rapid_rating?: number | null
+  blitz_rating?: number | null
   nationality?: string | null
 }
 

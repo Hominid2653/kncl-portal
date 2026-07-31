@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
 import { EmailOtpVerification } from '@/components/email-otp-verification'
+import MarketingPageShell from '@/components/marketing/MarketingPageShell'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -78,24 +79,21 @@ export default function CaptainRegistrationPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-12 sm:px-6">
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold tracking-[0.35em] text-muted-foreground uppercase">Club onboarding</p>
-        <h1 className="text-3xl font-semibold tracking-tight">Register as a club captain</h1>
-        <p className="text-muted-foreground">
-          Submit your club and captain details for league coordinator review. You will receive portal access once approved.
-        </p>
-      </div>
-
-      <Alert className="border-l-4 border-l-kenya-green">
+    <MarketingPageShell
+      eyebrow="Club onboarding"
+      title="Register as a club captain"
+      description="Submit your club and captain details for league coordinator review. You will receive portal access once approved."
+      width="3xl"
+    >
+      <Alert className="border-l-4 border-l-kenya-green bg-kenya-green/5">
         <AlertTitle>Email verification required</AlertTitle>
-        <AlertDescription>
+        <AlertDescription className="leading-6">
           We verify your captain email before your application enters the coordinator queue. Approval is still required before sign-in.
         </AlertDescription>
       </Alert>
 
       {step === 'form' ? (
-        <Card>
+        <Card className="border-border/80 shadow-sm">
           <CardHeader>
             <CardTitle>Club &amp; captain application</CardTitle>
             <CardDescription>Include an optional club charter document for faster review.</CardDescription>
@@ -152,7 +150,7 @@ export default function CaptainRegistrationPage() {
                 <FormField control={form.control} name="captainPhone" render={({ field }) => (
                   <FormItem><FormLabel>Captain phone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                <div className="flex flex-wrap gap-3 md:col-span-2">
+                <div className="flex flex-wrap gap-3 border-t border-border/60 pt-4 md:col-span-2">
                   <Button type="submit">Continue to email verification</Button>
                   <Button variant="outline" render={<Link to="/login" />}>Already approved? Sign in</Button>
                 </div>
@@ -161,7 +159,7 @@ export default function CaptainRegistrationPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="border-border/80 shadow-sm">
           <CardHeader>
             <CardTitle>Verify captain email</CardTitle>
             <CardDescription>Confirm ownership of {pendingData?.captainEmail} before we submit your application.</CardDescription>
@@ -181,6 +179,6 @@ export default function CaptainRegistrationPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </MarketingPageShell>
   )
 }

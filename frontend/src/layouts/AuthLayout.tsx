@@ -12,21 +12,22 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children, title, description }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="bg-header text-header-foreground">
+    <div className="flex min-h-screen flex-col bg-muted/30">
+      <header className="shrink-0 bg-header text-header-foreground">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-          <div>
+          <Link to="/" className="space-y-0.5">
             <p className="text-[10px] font-semibold tracking-[0.35em] text-white/60 uppercase">KNCL</p>
             <p className="text-sm font-medium">Transfer Portal</p>
-          </div>
-          <Link to="/" className="text-xs tracking-[0.2em] text-white/70 uppercase hover:text-white">
+          </Link>
+          <Link to="/" className="text-xs tracking-[0.2em] text-white/70 uppercase transition-colors hover:text-white">
             Home
           </Link>
         </div>
         <Separator className="bg-white/10" />
       </header>
-      <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-md items-center px-4 py-10 sm:px-6">
-        <Card className="w-full shadow-sm">
+
+      <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+        <Card className="w-full max-w-md shadow-sm">
           <CardHeader>
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
@@ -34,6 +35,10 @@ export default function AuthLayout({ children, title, description }: AuthLayoutP
           <CardContent>{children}</CardContent>
         </Card>
       </div>
+
+      <footer className="mt-auto shrink-0 border-t border-white/10 bg-header py-4 text-center text-xs text-white/45">
+        © {new Date().getFullYear()} Kenya National Chess League
+      </footer>
     </div>
   )
 }
