@@ -92,6 +92,21 @@ def test_list_supports_filter(client: TestClient, admin_headers: dict[str, str])
     assert all(item["league_id"] == str(league_id) for item in response.json()["items"])
 
 
+def test_list_public_leagues_without_authentication(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "auth_mock_enabled", False)
+    response = client.get("/api/v1/leagues/public")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] >= 1
+    assert body["items"][0]["name"]
+
+
 def test_list_requires_authentication_when_mock_disabled(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,

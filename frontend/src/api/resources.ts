@@ -12,6 +12,7 @@ async function list<T>(path: string, options?: { public?: boolean }): Promise<Li
 }
 
 export const listLeagues = () => list<ApiLeague>('/leagues/')
+export const listPublicLeagues = () => list<ApiLeague>('/leagues/public', { public: true })
 export const listClubs = () => list<ApiClub>('/clubs/')
 export const listPlayers = () => list<ApiPlayer>('/players/')
 export const listClubMembers = () => list<ApiClubMember>('/club-members/')
