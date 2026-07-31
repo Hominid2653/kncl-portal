@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
@@ -32,7 +32,7 @@ type CaptainForm = z.infer<typeof schema>
 export default function CaptainRegistrationPage() {
   const navigate = useNavigate()
   const { submitClubApplication } = useOnboarding()
-  const { leagues } = usePortalData()
+  const { leagues, loading } = usePortalData()
   const fileRef = useRef<HTMLInputElement>(null)
   const [charterFileName, setCharterFileName] = useState<string>()
   const [step, setStep] = useState<'form' | 'verify'>('form')
@@ -51,6 +51,14 @@ export default function CaptainRegistrationPage() {
       captainPhone: '',
     },
   })
+
+  useEffect(() => {
+    if (leagues.length === 0) return
+    const current = form.getValues('leagueId')
+    if (!current || !leagues.some((league) => league.id === current)) {
+      form.setValue('leagueId', leagues[0].id)
+    }
+  }, [leagues, form])
 
   const onFormSubmit = (data: CaptainForm) => {
     setPendingData(data)
@@ -71,7 +79,7 @@ export default function CaptainRegistrationPage() {
     )
     if (!id) return
 
-    form.reset({ leagueId: leagues[0].id, clubName: '', county: '', description: '', captainFirstName: '', captainLastName: '', captainEmail: '', captainPhone: '' })
+    form.reset({ leagueId: leagues[0]?.id ?? '', clubName: '', county: '', description: '', captainFirstName: '', captainLastName: '', captainEmail: '', captainPhone: '' })
     setCharterFileName(undefined)
     setPendingData(null)
     setStep('form')
@@ -104,8 +112,24 @@ export default function CaptainRegistrationPage() {
                 <FormField control={form.control} name="leagueId" render={({ field }) => (
                   <FormItem className="md:col-span-2">
                     <FormLabel>League</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={loading || leagues.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              loading
+                                ? 'Loading leagues...'
+                                : leagues.length === 0
+                                  ? 'No leagues available'
+                                  : 'Select a league'
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
                       <SelectContent>
                         {leagues.map((league) => (
                           <SelectItem key={league.id} value={league.id}>{league.name}</SelectItem>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
@@ -29,7 +29,7 @@ type PlayerForm = z.infer<typeof schema>
 export default function PlayerRegistrationPage() {
   const navigate = useNavigate()
   const { submitPlayerRegistration } = useOnboarding()
-  const { leagues } = usePortalData()
+  const { leagues, loading } = usePortalData()
   const [step, setStep] = useState<'form' | 'verify'>('form')
   const [pendingData, setPendingData] = useState<PlayerForm | null>(null)
 
@@ -44,6 +44,14 @@ export default function PlayerRegistrationPage() {
       leagueId: leagues[0]?.id ?? '',
     },
   })
+
+  useEffect(() => {
+    if (leagues.length === 0) return
+    const current = form.getValues('leagueId')
+    if (!current || !leagues.some((league) => league.id === current)) {
+      form.setValue('leagueId', leagues[0].id)
+    }
+  }, [leagues, form])
 
   const onFormSubmit = (data: PlayerForm) => {
     setPendingData(data)
@@ -88,8 +96,24 @@ export default function PlayerRegistrationPage() {
                 <FormField control={form.control} name="leagueId" render={({ field }) => (
                   <FormItem className="md:col-span-2">
                     <FormLabel>League</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={loading || leagues.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              loading
+                                ? 'Loading leagues...'
+                                : leagues.length === 0
+                                  ? 'No leagues available'
+                                  : 'Select a league'
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
                       <SelectContent>
                         {leagues.map((league) => (
                           <SelectItem key={league.id} value={league.id}>{league.name}</SelectItem>
@@ -115,7 +139,7 @@ export default function PlayerRegistrationPage() {
                   <FormItem><FormLabel>Nationality</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <div className="flex flex-wrap gap-3 border-t border-border/60 pt-4 md:col-span-2">
-                  <Button type="submit">Continue to email verification</Button>
+                  <Button type="submit" disabled={loading || leagues.length === 0}>Continue to email verification</Button>
                   <Button variant="outline" render={<Link to="/players" />}>Browse player listings</Button>
                 </div>
               </form>

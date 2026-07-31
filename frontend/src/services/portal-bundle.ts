@@ -6,7 +6,7 @@ import {
   listClubMembers,
   listClubs,
   listDocuments,
-  listLeagues,
+  listPublicLeagues,
   listNotifications,
   listPlayers,
   listRegistrations,
@@ -121,7 +121,7 @@ function settledValue<T>(result: PromiseSettledResult<T | null>): T | null {
 
 export async function fetchPortalBundle(user: MockUser | null): Promise<PortalBundle> {
   const settled = await Promise.allSettled([
-    listLeagues(),
+    listPublicLeagues(),
     listClubs(),
     listPlayers(),
     listUserProfiles(),

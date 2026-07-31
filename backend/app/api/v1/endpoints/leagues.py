@@ -24,6 +24,25 @@ service = LeagueService()
 authz = AuthorizationService()
 
 
+@router.get('/public', response_model=LeagueListResponse, summary='List leagues for public registration forms')
+async def list_public_leagues(
+    db: AsyncSession = Depends(get_db),
+    page: int = Query(1, ge=1, description='Page number'),
+    page_size: int = Query(100, ge=1, le=100, description='Items per page'),
+    sort_by: str | None = Query(None, description='Field to sort by'),
+    sort_order: str = Query('asc', pattern='^(asc|desc)$', description='Sort direction'),
+):
+    return await service.list(
+        db,
+        search=None,
+        search_fields=['name', 'description'],
+        sort_by=sort_by,
+        sort_order=sort_order,
+        page=page,
+        page_size=page_size,
+    )
+
+
 @router.get('/', response_model=LeagueListResponse, summary='List Leagues')
 async def list_league(
     db: AsyncSession = Depends(get_db),
