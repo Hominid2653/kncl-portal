@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/context/AuthContext'
 import { EngagementProvider } from '@/context/EngagementContext'
 import { OnboardingProvider } from '@/context/OnboardingContext'
@@ -20,7 +21,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
               <OnboardingProvider>
                 <RosterEnrollmentProvider>
                   <TransferProvider>
-                    <EngagementProvider>{children}</EngagementProvider>
+                    <EngagementProvider>
+                      {children}
+                      <Toaster position="top-right" richColors closeButton />
+                    </EngagementProvider>
                   </TransferProvider>
                 </RosterEnrollmentProvider>
               </OnboardingProvider>
